@@ -16,21 +16,6 @@ pip install -e .
 
 ---
 
-## Example Config File
-
-Create a config file, for example `config/dataset1.yaml`:
-
-```yaml
-input_file: data/intensity_matrix.csv
-feature_output: results/features.csv
-fdr_output: results/final_predictions.csv
-control_keywords: [EGFP, Empty, NminiTurbo]
-initial_positives: 10
-initial_negatives: 200
-```
-
----
-
 ## Run the pipeline with Snakemake (for example dataset 1):
 
 ```bash
