@@ -6,9 +6,12 @@ This repository provides a Snakemake pipeline for reproducing results in manuscr
 
 ## Installation
 
+Clone the repository and install the pipeline with:
+
 ```bash
-pip install -r requirements.txt
-pip install goatools
+git clone https://github.com/your-username/puppi_reproducibility.git
+cd puppi_reproducibility
+pip install -e .
 ```
 
 ---
