@@ -1,82 +1,78 @@
-configfile: "config/dataset1.yaml"
+# Snakefile
 
-rule all:
-    input:
-        config["fdr_output"],
-        config["gocc_output"],
-        config["biogrid_output"],
-        "results/Benchmarking BioID DIA/overall_precision_vs_recall_combined_bg_large_with_features.pdf",
-        "results/Benchmarking BioID DIA/recovery_overlap_combined_bg_large.pdf"
+configfile: "config.yaml"  # can be overridden via --configfile
 
+# Rule to run feature engineering
 rule feature_engineering:
     input:
-        config["input_file"]
+        data=config["input_file"]
     output:
-        config["feature_output"]
+        features=config["feature_output"]
+    params:
+        controls=",".join(config["controls"])
     shell:
         """
-        python script.py --step feature_engineering \
-            --input_file {input} --feature_output {output} \
-            --control_keywords {" ".join(config["control_keywords"])}
+        python script.py --step feature_engineering --config {configfile}
         """
 
+# Rule to train PU model and estimate FDR
 rule train_and_fdr:
     input:
-        config["feature_output"]
+        features=config["feature_output"]
     output:
-        config["fdr_output"]
+        fdr=config["fdr_output"]
     shell:
         """
-        python script.py --step train_and_fdr \
-            --feature_output {input} --fdr_output {output} \
-            --initial_positives {config[initial_positives]} \
-            --initial_negatives {config[initial_negatives]} \
-            --control_keywords {" ".join(config["control_keywords"])}
+        python script.py --step train_and_fdr --config {configfile}
         """
 
+# Rule to generate GO:CC ground truth
 rule generate_gocc:
     output:
         config["gocc_output"]
     shell:
         """
-        python script.py --step generate_gocc \
-            --gaf_file {config[gaf_file]} --obo_file {config[obo_file]} \
-            --gocc_output {output} --baits {" ".join(config["baits"])}
+        python script.py --step generate_gocc --config {configfile}
         """
 
+# Rule to generate BioGRID ground truth
 rule generate_biogrid:
     output:
         config["biogrid_output"]
     shell:
         """
-        python script.py --step generate_biogrid \
-            --biogrid_output {output} --baits {" ".join(config["baits"])}
+        python script.py --step generate_biogrid --config {configfile}
         """
 
+# Rule to plot precision-recall curves
 rule plot_pr:
     input:
-        config["feature_output"],
-        config["biogrid_output"]
-    output:
-        "results/Benchmarking BioID DIA/overall_precision_vs_recall_combined_bg_large_with_features.pdf"
+        fdr=config["fdr_output"],
+        saintq=config["saintq_path"],
+        saintex=config["saintexpress_path"],
+        gt=config["plot_gt_file"]
     shell:
         """
-        python script.py --step plot_pr \
-            --feature_output {input[0]} \
-            --plot_gt_file {input[1]} \
-            --plot_gt_source bg_large
+        python script.py --step plot_pr --config {configfile}
         """
 
+# Rule to plot overlap recovery
 rule plot_recovery:
     input:
-        config["feature_output"],
-        config["biogrid_output"]
-    output:
-        "results/Benchmarking BioID DIA/recovery_overlap_combined_bg_large.pdf"
+        fdr=config["fdr_output"],
+        saintq=config["saintq_path"],
+        saintex=config["saintexpress_path"],
+        gt=config["plot_gt_file"]
     shell:
         """
-        python script.py --step plot_recovery \
-            --feature_output {input[0]} \
-            --plot_gt_file {input[1]} \
-            --plot_gt_source bg_large
+        python script.py --step plot_recovery --config {configfile}
+        """
+
+# Full pipeline rule (optional if you want everything in one go)
+rule full_pipeline:
+    input:
+        fdr=config["fdr_output"]
+    shell:
+        """
+        python script.py --step full --config {configfile}
         """

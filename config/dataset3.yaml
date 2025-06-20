@@ -1,7 +1,30 @@
+# Input raw data
 input_file: data/dataset3/input_intensity_dataset.tsv
+
+# Controls used for negative examples in feature engineering
+controls: [GFP]
+
+# Bait proteins to analyze
+baits: [EIF4A2, MEPCE]
+
+# Output paths
 feature_output: results/dataset3/features.csv
 fdr_output: results/dataset3/final_predictions.csv
-controls: ['GFP']
-baits: ['EIF4A2', 'MEPCE']
+gocc_output: results/dataset3/gocc_ground_truth.csv
+biogrid_output: results/dataset3/biogrid_ground_truth.csv
+
+# Initial labeling for PU learning
 initial_positives: 10
 initial_negatives: 200
+
+# GO annotation files
+gaf_file: src/goa_human.gaf
+obo_file: src/go-basic.obo
+
+# Plotting inputs
+plot_gt_file: results/dataset3/biogrid_ground_truth.csv  # or biogrid_ground_truth.csv
+plot_gt_source: bg_large  # or "go_small" depending on your gold standard type
+
+# SAINT score outputs
+saintq_path: data/dataset3/SAINTexpress_output.txt
+saintexpress_path: data/dataset3/SAINTq_output.tsv

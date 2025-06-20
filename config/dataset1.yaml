@@ -1,7 +1,30 @@
+# Input raw data
 input_file: data/dataset1/input_intensity_dataset.tsv
+
+# Controls used for negative examples in feature engineering
+controls: [EGFP, Empty, NminiTurbo]
+
+# Bait proteins to analyze
+baits: ['ACTB', 'CTNNA1', 'KRT8', 'LMNA', 'MAPRE3']
+
+# Output paths
 feature_output: results/dataset1/features.csv
 fdr_output: results/dataset1/final_predictions.csv
-controls: [EGFP, Empty, NminiTurbo]
-baits: ['ACTB', 'CTNNA1', 'KRT8', 'LMNA', 'MAPRE3']
+gocc_output: results/dataset1/gocc_ground_truth.csv
+biogrid_output: results/dataset1/biogrid_ground_truth.csv
+
+# Initial labeling for PU learning
 initial_positives: 10
 initial_negatives: 200
+
+# GO annotation files
+gaf_file: src/goa_human.gaf
+obo_file: src/go-basic.obo
+
+# Plotting inputs
+plot_gt_file: results/dataset1/gocc_ground_truth.csv  # or biogrid_ground_truth.csv
+plot_gt_source: go_large  # or "go_small" depending on your gold standard type
+
+# SAINT score outputs
+saintq_path: data/dataset1/SAINTexpress_output.txt
+saintexpress_path: data/dataset1/SAINTq_output.tsv
