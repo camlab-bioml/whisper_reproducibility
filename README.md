@@ -9,7 +9,7 @@ This repository provides a Snakemake pipeline for reproducing results in manuscr
 Clone the repository and install the pipeline with:
 
 ```bash
-git clone https://github.com/your-username/puppi_reproducibility.git
+git clone https://github.com/camlab-bioml/puppi_reproducibility.git
 cd puppi_reproducibility
 pip install -e .
 ```
