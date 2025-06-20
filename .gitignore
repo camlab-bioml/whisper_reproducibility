@@ -2,7 +2,4 @@ __pycache__/
 *.pyc
 *.log
 *.DS_Store
-results/
-*.pdf
-*.png
 .env/
