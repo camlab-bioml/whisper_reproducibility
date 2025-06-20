@@ -1,0 +1,7 @@
+input_file: data/dataset4/input_intensity_dataset.tsv
+feature_output: results/dataset4/features.csv
+fdr_output: results/dataset4/final_predictions.csv
+controls: ['BirA']
+baits: ['PSMA4', 'PSMC2']
+initial_positives: 10
+initial_negatives: 200

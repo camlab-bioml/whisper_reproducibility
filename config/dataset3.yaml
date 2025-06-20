@@ -1,0 +1,7 @@
+input_file: data/dataset3/input_intensity_dataset.tsv
+feature_output: results/dataset3/features.csv
+fdr_output: results/dataset3/final_predictions.csv
+controls: ['GFP']
+baits: ['EIF4A2', 'MEPCE']
+initial_positives: 10
+initial_negatives: 200

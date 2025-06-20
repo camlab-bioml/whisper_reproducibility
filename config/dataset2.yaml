@@ -1,0 +1,7 @@
+input_file: data/dataset2/input_intensity_dataset.tsv
+feature_output: results/dataset2/features.csv
+fdr_output: results/dataset2/final_predictions.csv
+controls: [EGFP, Empty]
+baits: ['EGFR', 'PDHA1', 'RAB11A']
+initial_positives: 10
+initial_negatives: 200

@@ -1,0 +1,7 @@
+input_file: data/dataset1/input_intensity_dataset.tsv
+feature_output: results/dataset1/features.csv
+fdr_output: results/dataset1/final_predictions.csv
+controls: [EGFP, Empty, NminiTurbo]
+baits: ['ACTB', 'CTNNA1', 'KRT8', 'LMNA', 'MAPRE3']
+initial_positives: 10
+initial_negatives: 200
