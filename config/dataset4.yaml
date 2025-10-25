@@ -1,17 +1,17 @@
 # Input raw data
-input_file: data/dataset4/input_intensity_dataset.tsv
+input_file: data/dataset3/input_intensity_dataset.tsv
 
 # Controls used for negative examples in feature engineering
-controls: [BirA]
+controls: [GFP]
 
 # Bait proteins to analyze
-baits: [PSMA4, PSMC2]
+baits: [EIF4A2, MEPCE]
 
 # Output paths
-feature_output: results/dataset4/features.csv
-fdr_output: results/dataset4/final_predictions.csv
-gocc_output: results/dataset4/gocc_ground_truth.csv
-biogrid_output: results/dataset4/biogrid_ground_truth.csv
+feature_output: results/dataset3/features.csv
+fdr_output: results/dataset3/final_predictions.csv
+gocc_output: results/dataset3/gocc_ground_truth.csv
+biogrid_output: results/dataset3/biogrid_ground_truth.csv
 
 # Initial labeling for PU learning
 initial_positives: 10
@@ -22,9 +22,9 @@ gaf_file: src/goa_human.gaf
 obo_file: src/go-basic.obo
 
 # Plotting inputs
-plot_gt_file: results/dataset4/gocc_ground_truth.csv  # or biogrid_ground_truth.csv
-plot_gt_source: go_large  # or "go_small" depending on your gold standard type
+plot_gt_file: results/dataset3/biogrid_ground_truth.csv  # or biogrid_ground_truth.csv
+plot_gt_source: bg_large  # or "go_small" depending on your gold standard type
 
 # SAINT score outputs
-saintq_path: data/dataset4/SAINTexpress_output.txt
-saintexpress_path: data/dataset4/SAINTq_output.tsv
+saintq_path: data/dataset3/SAINTexpress_output.txt
+saintexpress_path: data/dataset3/SAINTq_output.tsv
