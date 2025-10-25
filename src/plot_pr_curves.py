@@ -144,7 +144,7 @@ def plot_pr_curve(
 
 
     plt.figure(figsize=(8, 8))
-    plt.plot(recall_pu, precision_pu, label=f'PU Learning\nAUC: {mean_auc_pu:.4f} ± {std_auc_pu:.4f}\nF1: {mean_f1_pu:.4f}', marker='o', markersize=2)
+    plt.plot(recall_pu, precision_pu, label=f'whisper\nAUC: {mean_auc_pu:.4f} ± {std_auc_pu:.4f}\nF1: {mean_f1_pu:.4f}', marker='o', markersize=2)
     plt.plot(recall_q, precision_q, label=f'SAINTq\nAUC: {mean_auc_q:.4f} ± {std_auc_q:.4f}\nF1: {mean_f1_q:.4f}', marker='o', markersize=2)
     plt.plot(recall_ex, precision_ex, label=f'SAINTexpress\nAUC: {mean_auc_ex:.4f} ± {std_auc_ex:.4f}\nF1: {mean_f1_ex:.4f}', marker='o', markersize=2)
     plt.plot(recall_comp, precision_comp, label=f'Composite\nAUC: {mean_auc_comp:.4f} ± {std_auc_comp:.4f}\nF1: {mean_f1_comp:.4f}', marker='o', markersize=2)
@@ -202,7 +202,7 @@ def plot_pr_curve(
     # ---- Plot PR curves (including features) ---- #
 
     plt.figure(figsize=(10, 10))
-    plt.plot(recall_pu, precision_pu, label=f'PU Learning\nAUC: {mean_auc_pu:.4f} ± {std_auc_pu:.4f}\nF1: {mean_f1_pu:.4f}', marker='o', markersize=2)
+    plt.plot(recall_pu, precision_pu, label=f'whisper\nAUC: {mean_auc_pu:.4f} ± {std_auc_pu:.4f}\nF1: {mean_f1_pu:.4f}', marker='o', markersize=2)
     plt.plot(recall_q, precision_q, label=f'SAINTq\nAUC: {mean_auc_q:.4f} ± {std_auc_q:.4f}\nF1: {mean_f1_q:.4f}', marker='o', markersize=2)
     plt.plot(recall_ex, precision_ex, label=f'SAINTexpress\nAUC: {mean_auc_ex:.4f} ± {std_auc_ex:.4f}\nF1: {mean_f1_ex:.4f}', marker='o', markersize=2)
     plt.plot(recall_comp, precision_comp, label=f'Composite\nAUC: {mean_auc_comp:.4f} ± {std_auc_comp:.4f}\nF1: {mean_f1_comp:.4f}', marker='o', markersize=2)
@@ -224,7 +224,7 @@ def plot_pr_curve(
 
 
     auc_data = {
-        'Method': ['PU Learning', 'SAINTq', 'SAINTexpress', 'Composite score'],
+        'Method': ['whisper', 'SAINTq', 'SAINTexpress', 'Composite score'],
         'Total AUC': [mean_auc_pu, mean_auc_q, mean_auc_ex, mean_auc_comp],
         'AUC@Top300': [
             auc_at_topn(combined_pu_df, 'predicted_probability', 'true_label', 300),
@@ -293,7 +293,7 @@ def plot_pr_curve(
         return grouped[['FDR_bin', 'Precision', 'Method']]
 
     # Apply to each method
-    df_pu = compute_precision_by_fdr_bin(combined_pu_df, 'FDR', 'true_label', 'PU Learning')
+    df_pu = compute_precision_by_fdr_bin(combined_pu_df, 'FDR', 'true_label', 'whisper')
     df_q = compute_precision_by_fdr_bin(combined_saintq_df, 'BFDR', 'true_label', 'SAINTq')
     df_ex = compute_precision_by_fdr_bin(combined_saintexpress_df, 'BFDR', 'true_label', 'SAINTexpress')
     # df_comp = compute_precision_by_fdr_bin(combined_comp_df, 'FDR', 'true_label', 'Composite')
@@ -330,7 +330,7 @@ def plot_pr_curve(
         return grouped
 
     # Apply to each method
-    df_pu_tp = compute_true_positives_by_fdr_bin(combined_pu_df, 'FDR', 'true_label', 'PU Learning')
+    df_pu_tp = compute_true_positives_by_fdr_bin(combined_pu_df, 'FDR', 'true_label', 'whisper')
     df_q_tp = compute_true_positives_by_fdr_bin(combined_saintq_df, 'BFDR', 'true_label', 'SAINTq')
     df_ex_tp = compute_true_positives_by_fdr_bin(combined_saintexpress_df, 'BFDR', 'true_label', 'SAINTexpress')
     # df_comp_tp = compute_true_positives_by_fdr_bin(combined_comp_df, 'FDR', 'true_label', 'Composite')
@@ -382,7 +382,7 @@ def plot_pr_curve(
     plt.figure(figsize=(8, 6))
 
     f1_data = [f1_pu, f1_q, f1_ex, f1_comp]
-    method_names = ['PU Learning', 'SAINTq', 'SAINTexpress', 'Composite']
+    method_names = ['whisper', 'SAINTq', 'SAINTexpress', 'Composite']
 
     plt.boxplot(f1_data, labels=method_names, patch_artist=True,
                 boxprops=dict(facecolor='lightblue', edgecolor='black'),
@@ -401,13 +401,13 @@ def plot_pr_curve(
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
     fig.suptitle('Score Distributions by True/False Label (All Baits Combined)', fontsize=14)
 
-    # PU Learning
+    # whisper
     axes[0, 0].hist(
         [combined_pu_df[combined_pu_df['true_label'] == 1]['predicted_probability'],
         combined_pu_df[combined_pu_df['true_label'] == 0]['predicted_probability']],
         bins=50, stacked=True, density=True, label=['True', 'False'], color=['navy', 'skyblue']
     )
-    axes[0, 0].set_title('PU Learning')
+    axes[0, 0].set_title('whisper')
     axes[0, 0].set_xlabel('Probability')
     axes[0, 0].set_ylabel('Density')
     axes[0, 0].legend()
@@ -455,12 +455,12 @@ def plot_pr_curve(
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
     fig.suptitle('Score Distributions by True/False Label (All Baits Combined)', fontsize=14)
 
-    # PU Learning
+    # whisper
     sns.kdeplot(
         data=combined_pu_df, x='predicted_probability', hue='true_label',
         fill=True, common_norm=False, palette={1: 'navy', 0: 'skyblue'}, ax=axes[0, 0]
     )
-    axes[0, 0].set_title('PU Learning')
+    axes[0, 0].set_title('whisper')
     axes[0, 0].set_xlabel('Probability')
     axes[0, 0].set_ylabel('Density')
     axes[0, 0].legend(title='Label', labels=['False', 'True'])
@@ -505,7 +505,7 @@ def plot_pr_curve(
 
     # Prepare data
     pu_df = combined_pu_df.copy()
-    pu_df['Method'] = 'PU Learning'
+    pu_df['Method'] = 'whisper'
     pu_df['Score'] = pu_df['predicted_probability']
 
     saintq_df = combined_saintq_df.copy()
@@ -564,7 +564,7 @@ def plot_pr_curve(
 
     # Prepare data
     pu_df = combined_pu_df.copy()
-    pu_df['Method'] = 'PU Learning'
+    pu_df['Method'] = 'whisper'
     pu_df['Score'] = pu_df['predicted_probability']
 
     saintq_df = combined_saintq_df.copy()
@@ -646,19 +646,19 @@ def plot_pr_curve(
     tp_results_score = []
     tp_results_fdr = []
 
-    # PU Learning
+    # whisper
     features_df = features_df.copy()
     features_df['true_label'] = features_df.apply(lambda row: 1 if row['Prey'] in go_cc_dict.get(row['Bait'], set()) else 0, axis=1)
 
     # PU: probability vs TP
     sorted_probs = features_df.sort_values("predicted_probability", ascending=False)
     cumulative_tp = sorted_probs['true_label'].cumsum()
-    tp_results_score.append(('PU Learning', sorted_probs['predicted_probability'].values, cumulative_tp.values))
+    tp_results_score.append(('whisper', sorted_probs['predicted_probability'].values, cumulative_tp.values))
 
     # PU: FDR vs TP
     sorted_fdr = features_df.sort_values("FDR")
     cumulative_tp_fdr = sorted_fdr['true_label'].cumsum()
-    tp_results_fdr.append(('PU Learning', sorted_fdr['FDR'].values, cumulative_tp_fdr.values))
+    tp_results_fdr.append(('whisper', sorted_fdr['FDR'].values, cumulative_tp_fdr.values))
 
     # Composite Score (normalized)
     composite_scores = features_df['composite_score']
@@ -693,7 +693,7 @@ def plot_pr_curve(
     # Plot TP vs Score (Probability or Composite)
     plt.figure(figsize=(10, 6))
     colors = {
-        'PU Learning': '#1f77b4',
+        'whisper': '#1f77b4',
         'SAINTq': '#ff7f0e',
         'SAINTexpress': '#2ca02c',
         'Composite Score': 'red'

@@ -58,7 +58,7 @@ def recovery_overlap(
     # Apply fixes for each method
     df_pu = features_df[['Bait', 'Prey', 'predicted_probability']].copy()
     df_pu.columns = ['Bait', 'Prey', 'Score']
-    df_pu['Method'] = 'PU Learning'
+    df_pu['Method'] = 'whisper'
 
     df_q = prepare_method_df(saintq_df, 'Bait', 'PreyGene', 'AvgP', 'SAINTq')
     df_ex = prepare_method_df(saintexpress_df, 'Bait', 'PreyGene', 'AvgP', 'SAINTexpress')
@@ -88,7 +88,7 @@ def recovery_overlap(
     top_ks = np.arange(step, max_n + step, step)
 
     colors = {
-        'PU Learning': '#1f77b4',
+        'whisper': '#1f77b4',
         'SAINTq': '#ff7f0e',
         'SAINTexpress': '#2ca02c',
         'Composite score': 'crimson'
