@@ -2,7 +2,10 @@
 
 configfile: "config.yaml"  # can be overridden via --configfile
 
-# Rule to run feature engineering
+# -------------------------
+# Core data prep & training
+# -------------------------
+
 rule feature_engineering:
     input:
         data=config["input_file"]
@@ -15,7 +18,6 @@ rule feature_engineering:
         python script.py --step feature_engineering --config {configfile}
         """
 
-# Rule to train PU model and estimate FDR
 rule train_and_fdr:
     input:
         features=config["feature_output"]
@@ -26,7 +28,10 @@ rule train_and_fdr:
         python script.py --step train_and_fdr --config {configfile}
         """
 
-# Rule to generate GO:CC ground truth
+# -------------------------
+# Ground-truth generation
+# -------------------------
+
 rule generate_gocc:
     output:
         config["gocc_output"]
@@ -35,7 +40,6 @@ rule generate_gocc:
         python script.py --step generate_gocc --config {configfile}
         """
 
-# Rule to generate BioGRID ground truth
 rule generate_biogrid:
     output:
         config["biogrid_output"]
@@ -44,10 +48,15 @@ rule generate_biogrid:
         python script.py --step generate_biogrid --config {configfile}
         """
 
-# Rule to plot precision-recall curves
+# -------------------------
+# Plots & analyses
+# -------------------------
+
+# Precision–Recall curves (aggregated)
 rule plot_pr:
     input:
-        fdr=config["fdr_output"],
+        # Ensure features exist and external method tables + GT are available
+        features=config["feature_output"],
         saintq=config["saintq_path"],
         saintex=config["saintexpress_path"],
         gt=config["plot_gt_file"]
@@ -56,10 +65,10 @@ rule plot_pr:
         python script.py --step plot_pr --config {configfile}
         """
 
-# Rule to plot overlap recovery
+# Recovery/overlap plots
 rule plot_recovery:
     input:
-        fdr=config["fdr_output"],
+        features=config["feature_output"],
         saintq=config["saintq_path"],
         saintex=config["saintexpress_path"],
         gt=config["plot_gt_file"]
@@ -68,7 +77,53 @@ rule plot_recovery:
         python script.py --step plot_recovery --config {configfile}
         """
 
-# Full pipeline rule (optional if you want everything in one go)
+# Precision & TP by FDR bins (whisper vs SAINTq/express vs limma)
+rule plot_fdr_bins:
+    input:
+        # Depend on trained whisper (FDR present), external methods, and GT
+        fdr=config["fdr_output"],
+        saintq=config["saintq_path"],
+        saintex=config["saintexpress_path"],
+        limma=config["limma_path"],
+        gt=config["plot_gt_file"]
+    shell:
+        """
+        python script.py --step plot_fdr_bins --config {configfile}
+        """
+
+# FDR robustness distributions (whisper FDR vs alternative nulls)
+rule plot_fdr_robustness:
+    input:
+        # Use trained whisper output containing probabilities & FDR
+        fdr=config["fdr_output"]
+    shell:
+        """
+        python script.py --step plot_fdr_robustness --config {configfile}
+        """
+
+# Sensitivity sweep over initial positives/negatives (training inside)
+rule plot_sensitivity:
+    input:
+        # Needs engineered features (training happens within the step)
+        features=config["feature_output"]
+    shell:
+        """
+        python script.py --step plot_sensitivity --config {configfile}
+        """
+
+# PR AUC sweep across positives/negatives (training inside)
+rule plot_posneg_pr:
+    input:
+        features=config["feature_output"],
+        gt=config["plot_gt_file"]
+    shell:
+        """
+        python script.py --step plot_posneg_pr --config {configfile}
+        """
+
+# -------------------------
+# Full pipeline (data prep + training)
+# -------------------------
 rule full_pipeline:
     input:
         fdr=config["fdr_output"]
