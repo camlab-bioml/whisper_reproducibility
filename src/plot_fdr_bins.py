@@ -33,7 +33,7 @@ def plot_fdr_bins(
 ):
     """
     Precision & TP counts by FDR bin (aggregated across all baits), comparing:
-      - whisper (PU Learning) [FDR column: 'FDR']
+      - whisper (WHISPER) [FDR column: 'FDR']
       - SAINTq & SAINTexpress [FDR/BFDR column: 'BFDR']
       - limma [adjusted p-value column: 'adj.P.Val']
 
@@ -144,7 +144,7 @@ def plot_fdr_bins(
     # Per-bait processing
     # -----------------------------
     all_bait_rows = []
-    methods = ["PU Learning", "SAINTq", "SAINTexpress", "limma"]
+    methods = ["WHISPER", "SAINTq", "SAINTexpress", "limma"]
     if background_exclusion:
         methods.insert(1, "PU excl. background")
 
@@ -195,7 +195,7 @@ def plot_fdr_bins(
                 cumulative[method_name][r["FDR_bin"]]["TP"] += int(r["TP"])
                 cumulative[method_name][r["FDR_bin"]]["Total"] += int(r["Total"])
 
-        _collect("PU Learning", pu_incl)
+        _collect("WHISPER", pu_incl)
         if background_exclusion:
             _collect("PU excl. background", pu_excl)
         _collect("SAINTq", q_stats)
@@ -227,7 +227,7 @@ def plot_fdr_bins(
     # Plot
     # -----------------------------
     colors = {
-        "PU Learning": "#003f5c",
+        "WHISPER": "#003f5c",
         "PU excl. background": "#9ecae9",
         "SAINTq": "#ffb347",
         "SAINTexpress": "#ff7f0e",
