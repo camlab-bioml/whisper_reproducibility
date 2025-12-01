@@ -25,7 +25,7 @@ def plot_fdr_bins(
     limma_df_raw: pd.DataFrame,
     go_cc_df: pd.DataFrame,
     gt_source: str = "go_large",
-    outdir: str = "results/Benchmarking BioID DIA",
+    outdir: str = "results",
     background_exclusion: bool = True,
     background_flag_col: str = "global_cv_flag",
     background_flag_value: str = "likely background",
@@ -33,7 +33,7 @@ def plot_fdr_bins(
 ):
     """
     Precision & TP counts by FDR bin (aggregated across all baits), comparing:
-      - whisper (WHISPER) [FDR column: 'FDR']
+      - WHISPER [FDR column: 'FDR']
       - SAINTq & SAINTexpress [FDR/BFDR column: 'BFDR']
       - limma [adjusted p-value column: 'adj.P.Val']
 
@@ -42,7 +42,7 @@ def plot_fdr_bins(
     features_df : DataFrame
         Must include columns: ['Bait', 'Prey', 'FDR'] and (optionally) background_flag_col.
     saintq_df_raw : DataFrame
-        Must include columns: ['Bait','PreyGene','BFDR','AvgP'] (AvgP unused here, but common schema).
+        Must include columns: ['Bait','PreyGene','BFDR','AvgP'].
     saintexpress_df_raw : DataFrame
         Must include columns: ['Bait','PreyGene','BFDR','AvgP'].
     limma_df_raw : DataFrame
@@ -52,9 +52,10 @@ def plot_fdr_bins(
     gt_source : str
         Label used in output filenames.
     outdir : str
-        Directory to save figures and CSV outputs.
+        Directory to save figures and CSV outputs (e.g. results/dataset1/Benchmarking BioID DIA).
     background_exclusion : bool
-        If True, also compute "PU excl. background" by removing rows where background_flag_col == background_flag_value.
+        If True, also compute "PU excl. background" by removing rows where
+        background_flag_col == background_flag_value.
     background_flag_col : str
         Column name used to flag likely-background rows in features_df.
     background_flag_value : str
@@ -64,8 +65,8 @@ def plot_fdr_bins(
 
     Outputs
     -------
-    - CSV: precision_tp_results_by_bin_{gt_source}[...].csv
-    - PDF: tp_precision_barplot_{gt_source}[...].pdf
+    - CSV: precision_tp_results_by_bin_{gt_source}[...].csv  (in outdir)
+    - PDF: tp_precision_barplot_{gt_source}[...].pdf         (in outdir)
     """
 
     os.makedirs(outdir, exist_ok=True)
@@ -90,12 +91,21 @@ def plot_fdr_bins(
             if len(missing) > 0:
                 if prey_col == "PreyGene":
                     miss_df = pd.DataFrame(
-                        {"Bait": bait, "PreyGene": missing, "BFDR": 1.0, "AvgP": 0.0}
+                        {
+                            "Bait": bait,
+                            "PreyGene": missing,
+                            "BFDR": 1.0,
+                            "AvgP": 0.0,
+                        }
                     )
                 else:
                     # limma case (prey_col == 'Prey')
                     miss_df = pd.DataFrame(
-                        {"Bait": bait, "Prey": missing, "adj.P.Val": 1.0}
+                        {
+                            "Bait": bait,
+                            "Prey": missing,
+                            "adj.P.Val": 1.0,
+                        }
                     )
                 sub = pd.concat([sub, miss_df], ignore_index=True)
             out_chunks.append(sub)
@@ -105,8 +115,12 @@ def plot_fdr_bins(
         tmp = df.copy()
         if drop_bg and background_flag_col in tmp.columns:
             tmp = tmp[tmp[background_flag_col] != background_flag_value]
-        tmp["FDR_bin"] = pd.cut(tmp[fdr_column], bins=bins, labels=fdr_bin_labels, include_lowest=True)
-        # For each bin: TP, Total, Precision
+        tmp["FDR_bin"] = pd.cut(
+            tmp[fdr_column],
+            bins=bins,
+            labels=fdr_bin_labels,
+            include_lowest=True,
+        )
         out = (
             tmp.groupby("FDR_bin")["true_label"]
             .agg(TP="sum", Total="count")
@@ -119,7 +133,6 @@ def plot_fdr_bins(
     # -----------------------------
     # Prepare inputs (schemas)
     # -----------------------------
-    # SAINT tables: ensure complete prey coverage
     saintq_df = saintq_df_raw.copy()
     saintex_df = saintexpress_df_raw.copy()
     limma_df = limma_df_raw.copy()
@@ -135,7 +148,6 @@ def plot_fdr_bins(
     # -----------------------------
     # Ground truth dict by bait
     # -----------------------------
-    # Restrict GT to identified preys
     identified_preys = set(features_df["Prey"].unique())
     go_cc_df = go_cc_df[go_cc_df["Prey"].isin(identified_preys)].copy()
     gt_dict = {b: set(df["Prey"]) for b, df in go_cc_df.groupby("Bait")}
@@ -148,7 +160,6 @@ def plot_fdr_bins(
     if background_exclusion:
         methods.insert(1, "PU excl. background")
 
-    # cumulative aggregations across baits
     cumulative = {
         m: {lab: {"TP": 0, "Total": 0} for lab in fdr_bin_labels} for m in methods
     }
@@ -156,7 +167,7 @@ def plot_fdr_bins(
     for bait in features_df["Bait"].unique():
         gold = gt_dict.get(bait, set())
 
-        # whisper/PU (features_df)
+        # WHISPER / PU (features_df)
         bait_pu = features_df[features_df["Bait"] == bait].copy()
         bait_pu["true_label"] = bait_pu["Prey"].isin(gold).astype(int)
 
@@ -171,7 +182,7 @@ def plot_fdr_bins(
         bait_lim = limma_df[limma_df["Bait"] == bait].copy()
         bait_lim["true_label"] = bait_lim["Prey"].isin(gold).astype(int)
 
-        # Compute per-bin stats
+        # Per-bin stats
         pu_incl = _compute_precision_and_tp(bait_pu, "FDR", fdr_bins, drop_bg=False)
         if background_exclusion:
             pu_excl = _compute_precision_and_tp(bait_pu, "FDR", fdr_bins, drop_bg=True)
@@ -179,7 +190,6 @@ def plot_fdr_bins(
         ex_stats = _compute_precision_and_tp(bait_ex, "BFDR", fdr_bins, drop_bg=False)
         lim_stats = _compute_precision_and_tp(bait_lim, "adj.P.Val", fdr_bins, drop_bg=False)
 
-        # Collect rows & update cumulative
         def _collect(method_name, df_stats):
             for _, r in df_stats.iterrows():
                 all_bait_rows.append(
@@ -220,7 +230,14 @@ def plot_fdr_bins(
             tp = cumulative[m][b]["TP"]
             total = cumulative[m][b]["Total"]
             prec = (tp / total) if total > 0 else 0.0
-            plot_rows.append({"Method": m, "FDR Bin": b, "TP": tp, "Precision": prec})
+            plot_rows.append(
+                {
+                    "Method": m,
+                    "FDR Bin": b,
+                    "TP": tp,
+                    "Precision": prec,
+                }
+            )
     plot_df = pd.DataFrame(plot_rows)
 
     # -----------------------------

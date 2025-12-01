@@ -12,7 +12,8 @@ from src.plot_fdr_bins import plot_fdr_bins
 from src.plot_sensitivity import plot_sensitivity
 from src.plot_posneg_pr import plot_posneg_pr
 from src.plot_fdr_robustness import plot_fdr_robustness
-
+from src.plot_go_upset import run_go_upset_analysis
+from src.plot_hpa_annotations import plot_hpa_annotations
 
 
 def load_data(path):
@@ -29,20 +30,15 @@ def ensure_directories_exist(paths):
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
 def main():
-    parser = argparse.ArgumentParser(description="Run PU Learning Pipeline")
-    # parser choices:
+    parser = argparse.ArgumentParser(description="Run WHISPER Pipeline")
     parser.add_argument('--step', required=True, choices=[
         "feature_engineering", "train_and_fdr", "generate_gocc", "generate_biogrid",
         "plot_pr", "plot_recovery", "plot_fdr_bins", "plot_fdr_robustness",
-        "plot_sensitivity", "plot_posneg_pr", "full"
+        "plot_sensitivity", "plot_posneg_pr", "plot_go_upset", "plot_hpa", "full"
     ])
-
-
     parser.add_argument('--config', required=True, help='Path to configuration YAML')
-
     args = parser.parse_args()
 
-    # ✅ Load YAML config
     def load_config(path):
         with open(path, 'r') as f:
             return yaml.safe_load(f)
@@ -52,7 +48,8 @@ def main():
         CONFIG["feature_output"],
         CONFIG["fdr_output"],
         CONFIG["gocc_output"],
-        CONFIG["biogrid_output"]
+        CONFIG["biogrid_output"],
+        CONFIG.get("results_dir", "results")   # <-- ensure results_dir exists too
     ])
 
     if args.step == "feature_engineering":
@@ -81,25 +78,45 @@ def main():
 
     elif args.step == "plot_pr":
         features_df = load_data(CONFIG["feature_output"])
-        saintq_df = load_data(CONFIG["saintq_path"])
-        saintex_df = load_data(CONFIG["saintexpress_path"])
-        gt_df = load_data(CONFIG["plot_gt_file"])
-        plot_pr_curve(features_df, saintq_df, saintex_df, gt_df, CONFIG["plot_gt_source"])
+        saintq_df   = load_data(CONFIG["saintq_path"])
+        saintex_df  = load_data(CONFIG["saintexpress_path"])
+        limma_df    = load_data(CONFIG["limma_path"])        # <-- NEW
+        gt_df       = load_data(CONFIG["plot_gt_file"])
+
+        plot_pr_curve(
+            features_df=features_df,
+            saintq_df_raw=saintq_df,
+            saintexpress_df_raw=saintex_df,
+            limma_df_raw=limma_df,
+            go_cc_df=gt_df,
+            gt_source=CONFIG["plot_gt_source"],
+            outdir=CONFIG["results_dir"],                    # <-- dataset-specific output root
+        )
 
     elif args.step == "plot_recovery":
         features_df = load_data(CONFIG["feature_output"])
-        saintq_df = load_data(CONFIG["saintq_path"])
-        saintex_df = load_data(CONFIG["saintexpress_path"])
-        gt_df = load_data(CONFIG["plot_gt_file"])
-        recovery_overlap(features_df, saintq_df, saintex_df, gt_df, CONFIG["plot_gt_source"])
+        saintq_df   = load_data(CONFIG["saintq_path"])
+        saintex_df  = load_data(CONFIG["saintexpress_path"])
+        limma_df    = load_data(CONFIG["limma_path"])
+        gt_df       = load_data(CONFIG["plot_gt_file"])
 
-    # in main() under args.step == "plot_fdr_bins":
+        recovery_overlap(
+            features_df=features_df,
+            saintq_df_raw=saintq_df,
+            saintexpress_df_raw=saintex_df,
+            limma_df_raw=limma_df,
+            go_cc_df=gt_df,
+            gt_source=CONFIG["plot_gt_source"],
+            outdir=CONFIG["results_dir"],
+        )
+
+
     elif args.step == "plot_fdr_bins":
         features_df = load_data(CONFIG["feature_output"])
-        saintq_df = load_data(CONFIG["saintq_path"])
-        saintex_df = load_data(CONFIG["saintexpress_path"])
-        limma_df = load_data(CONFIG["limma_path"])
-        gt_df = load_data(CONFIG["plot_gt_file"])
+        saintq_df   = load_data(CONFIG["saintq_path"])
+        saintex_df  = load_data(CONFIG["saintexpress_path"])
+        limma_df    = load_data(CONFIG["limma_path"])
+        gt_df       = load_data(CONFIG["plot_gt_file"])
 
         plot_fdr_bins(
             features_df=features_df,
@@ -116,7 +133,7 @@ def main():
         )
 
     elif args.step == "plot_sensitivity":
-        features_df = load_data(CONFIG["feature_output"])  # produced by train_and_fdr input stage (need composite_score, features)
+        features_df = load_data(CONFIG["feature_output"])
         plot_sensitivity(
             features_df=features_df,
             outdir=CONFIG["results_dir"],
@@ -141,7 +158,7 @@ def main():
 
     elif args.step == "plot_posneg_pr":
         features_df = load_data(CONFIG["feature_output"])
-        gt_df = load_data(CONFIG["plot_gt_file"])  # same GT you use for PR plots
+        gt_df = load_data(CONFIG["plot_gt_file"])
         plot_posneg_pr(
             features_df=features_df,
             gt_df=gt_df,
@@ -164,7 +181,8 @@ def main():
         )
 
     elif args.step == "plot_fdr_robustness":
-        features_df = load_data(CONFIG["feature_output"])  # <- must include 'predicted_probability' and 'FDR'
+        # Use trained WHISPER output that contains probabilities & FDR
+        features_df = load_data(CONFIG["fdr_output"])
         res = plot_fdr_robustness(
             features_df=features_df,
             outdir=CONFIG["results_dir"],
@@ -180,8 +198,46 @@ def main():
             seed=CONFIG.get("seed", 42),
             save_prefix=f"_{CONFIG['plot_gt_source']}" if "plot_gt_source" in CONFIG else ""
         )
-        print("[INFO] FDR robustness outputs:", res)
 
+
+    elif args.step == "plot_go_upset":
+        # Use trained WHISPER output + external methods
+        puppi_df = load_data(CONFIG["fdr_output"])            # WHISPER results
+        saintq_df = load_data(CONFIG["saintq_path"])
+        saintex_df = load_data(CONFIG["saintexpress_path"])
+        limma_df = load_data(CONFIG["limma_path"])
+
+        # Dump everything directly into the dataset-specific results_dir
+        outdir = CONFIG["results_dir"]
+        fdr_thr = CONFIG.get("go_fdr_threshold", 0.01)
+        go_user_thr = CONFIG.get("go_user_threshold", 0.05)
+
+        run_go_upset_analysis(
+            puppi_df=puppi_df,
+            limma_df=limma_df,
+            saintq_df=saintq_df,
+            saintexpress_df=saintex_df,
+            outdir=outdir,
+            fdr_threshold=fdr_thr,
+            go_user_threshold=go_user_thr,
+        )
+
+    elif args.step == "plot_hpa":
+        whisper_df = load_data(CONFIG["fdr_output"])
+        saintq_df = load_data(CONFIG["saintq_path"])
+        saintex_df = load_data(CONFIG["saintexpress_path"])
+        limma_df = load_data(CONFIG["limma_path"])
+
+        plot_hpa_annotations(
+            whisper_df=whisper_df,
+            saintq_df=saintq_df,
+            saintexpress_df=saintex_df,
+            limma_df=limma_df,
+            hpa_tsv=CONFIG["hpa_path"],
+            bait=CONFIG["hpa_bait"],
+            outdir=CONFIG["results_dir"],
+            fdr_threshold=CONFIG.get("fdr_threshold", 0.01),
+        )
 
     elif args.step == "full":
         df = load_data(CONFIG["input_file"])

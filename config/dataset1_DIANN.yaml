@@ -28,3 +28,8 @@ plot_gt_source: go_large  # or "go_small" depending on your gold standard type
 # SAINT score outputs
 saintq_path: data/dataset1/Benchmarking BioID DIA/SAINTexpress_output.txt
 saintexpress_path: data/dataset1/Benchmarking BioID DIA/SAINTq_output.tsv
+
+
+hpa_path: "data/dataset1/Benchmarking BioID DIA/HPA_subcellular_location.tsv"
+hpa_bait: "LMNA"          # or whatever bait you want
+fdr_threshold: 0.01       # optional

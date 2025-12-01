@@ -20,7 +20,7 @@ warnings.filterwarnings("ignore")
 
 def plot_fdr_robustness(
     features_df: pd.DataFrame,
-    outdir: str = "results/Benchmarking BioID DIA",
+    outdir: str = "results",
     label_pred_col: str = "predicted_probability",
     fdr_col: str = "FDR",
     mean_diff_col: str = "mean_diff",
@@ -48,7 +48,7 @@ def plot_fdr_robustness(
           - a model probability column (label_pred_col) and FDR column (fdr_col)
         Typically produced by your `train_and_fdr` step.
 
-    Outputs
+    Outputs (all under `outdir`)
     -------
     - CSV: mean_diff_fdr_all_methods{save_prefix}.csv
     - PDF: compare_fdr_distributions{save_prefix}.pdf
@@ -96,7 +96,7 @@ def plot_fdr_robustness(
         )
         decoy_md_pair_scores = df_pairs[mean_diff_col].dropna().values
 
-        # FDR curves per unique real score (monotone-free by construction here)
+        # FDR curves per unique real score
         real_md_scores = df[mean_diff_col].values
         unique_md_real = np.unique(real_md_scores)
 
@@ -124,20 +124,17 @@ def plot_fdr_robustness(
     # -----------------------------
     # Save CSV of FDRs for record
     # -----------------------------
-    csv_out = os.path.join(
-        outdir, f"mean_diff_fdr_all_methods{save_prefix}.csv"
-    )
-    df[[bait_col, prey_col, mean_diff_col, "mean_diff_FDR_shuffle", "mean_diff_FDR_pairs", fdr_col]].to_csv(
-        csv_out, index=False
-    )
+    csv_out = os.path.join(outdir, f"mean_diff_fdr_all_methods{save_prefix}.csv")
+    df[
+        [bait_col, prey_col, mean_diff_col,
+         "mean_diff_FDR_shuffle", "mean_diff_FDR_pairs", fdr_col]
+    ].to_csv(csv_out, index=False)
 
     # -----------------------------
     # Plot 1: Overlaid distributions (hist + KDE)
     # -----------------------------
     plt.figure(figsize=(12, 5))
 
-    # (left) hist
-    plt.subplot(1, 2, 1)
     lab_map = {
         fdr_col: "whisper (PU)",
         "mean_diff_FDR_shuffle": "mean_diff (value shuffle)",
@@ -148,30 +145,42 @@ def plot_fdr_robustness(
         "mean_diff_FDR_shuffle": "orange",
         "mean_diff_FDR_pairs": "green",
     }
+
+    # (left) hist
+    ax1 = plt.subplot(1, 2, 1)
     for col in [fdr_col, "mean_diff_FDR_shuffle", "mean_diff_FDR_pairs"]:
         if df[col].notna().any():
-            plt.hist(
+            ax1.hist(
                 df[col].dropna().values,
                 bins=hist_bins_main,
                 alpha=0.6,
                 label=lab_map[col],
                 color=colors[col],
             )
-    plt.xlabel("Estimated FDR")
-    plt.ylabel("Number of interactions")
-    plt.title("Histogram of Assigned FDRs")
-    plt.legend()
+    ax1.set_xlabel("Estimated FDR", fontsize=22)
+    ax1.set_ylabel("Number of interactions", fontsize=22)
+    ax1.tick_params(axis="x", labelsize=20)
+    ax1.tick_params(axis="y", labelsize=20)
+    ax1.set_title("Histogram of Assigned FDRs", fontsize=22)
+    ax1.legend(fontsize=12, frameon=False)
 
     # (right) KDE
-    plt.subplot(1, 2, 2)
+    ax2 = plt.subplot(1, 2, 2)
     for col in [fdr_col, "mean_diff_FDR_shuffle", "mean_diff_FDR_pairs"]:
         if df[col].notna().any():
-            sns.kdeplot(df[col].dropna().values, label=lab_map[col], color=colors[col])
-    plt.xlabel("Estimated FDR")
-    plt.ylabel("Density")
-    plt.title("Density of Assigned FDRs (log y)")
-    plt.yscale("log")
-    plt.legend()
+            sns.kdeplot(
+                df[col].dropna().values,
+                label=lab_map[col],
+                color=colors[col],
+                ax=ax2,
+            )
+    ax2.set_xlabel("Estimated FDR", fontsize=22)
+    ax2.set_ylabel("Density", fontsize=22)
+    ax2.tick_params(axis="x", labelsize=20)
+    ax2.tick_params(axis="y", labelsize=20)
+    ax2.set_title("Density of Assigned FDRs (log y)", fontsize=22)
+    ax2.set_yscale("log")
+    ax2.legend(fontsize=12, frameon=False)
 
     plt.tight_layout()
     pdf_compare = os.path.join(outdir, f"compare_fdr_distributions{save_prefix}.pdf")
@@ -181,7 +190,6 @@ def plot_fdr_robustness(
     # -----------------------------
     # Plot 2: Three-panel histograms on shared log scale
     # -----------------------------
-    # compute a shared ymax across panels
     def _hist_counts(col, bins):
         vals = df[col].dropna().values
         if len(vals) == 0:
@@ -191,36 +199,46 @@ def plot_fdr_robustness(
     counts_pu  = _hist_counts(fdr_col, hist_bins_summary)
     counts_md1 = _hist_counts("mean_diff_FDR_shuffle", hist_bins_main)
     counts_md2 = _hist_counts("mean_diff_FDR_pairs", hist_bins_summary)
-    max_val = max(int(counts_pu.max() if counts_pu.size else 1),
-                  int(counts_md1.max() if counts_md1.size else 1),
-                  int(counts_md2.max() if counts_md2.size else 1))
+    max_val = max(
+        int(counts_pu.max() if counts_pu.size else 1),
+        int(counts_md1.max() if counts_md1.size else 1),
+        int(counts_md2.max() if counts_md2.size else 1),
+    )
 
     plt.figure(figsize=(15, 5))
 
-    plt.subplot(1, 3, 1)
+    ax = plt.subplot(1, 3, 1)
     if df[fdr_col].notna().any():
-        plt.hist(df[fdr_col].dropna().values, bins=hist_bins_summary, color="blue", alpha=0.85)
-    plt.xlabel("Estimated FDR")
-    plt.ylabel("Number of interactions")
-    plt.yscale("log")
-    plt.ylim(1e-1, max_val * log_ylim_pad)
-    plt.title("whisper (PU)")
+        ax.hist(df[fdr_col].dropna().values, bins=hist_bins_summary, color="blue", alpha=0.85)
+    ax.set_xlabel("Estimated FDR", fontsize=20)
+    ax.set_ylabel("Number of interactions", fontsize=20)
+    ax.tick_params(axis="x", labelsize=18)
+    ax.tick_params(axis="y", labelsize=18)
+    ax.set_yscale("log")
+    ax.set_ylim(1e-1, max_val * log_ylim_pad)
+    ax.set_title("whisper (PU)", fontsize=20)
 
-    plt.subplot(1, 3, 2)
+    ax = plt.subplot(1, 3, 2)
     if df["mean_diff_FDR_shuffle"].notna().any():
-        plt.hist(df["mean_diff_FDR_shuffle"].dropna().values, bins=hist_bins_main + 1, color="orange", alpha=0.85)
-    plt.xlabel("Estimated FDR")
-    plt.yscale("log")
-    plt.ylim(1e-1, max_val * log_ylim_pad)
-    plt.title("mean_diff (value shuffle)")
+        ax.hist(df["mean_diff_FDR_shuffle"].dropna().values, bins=hist_bins_main + 1,
+                color="orange", alpha=0.85)
+    ax.set_xlabel("Estimated FDR", fontsize=20)
+    ax.tick_params(axis="x", labelsize=18)
+    ax.tick_params(axis="y", labelsize=18)
+    ax.set_yscale("log")
+    ax.set_ylim(1e-1, max_val * log_ylim_pad)
+    ax.set_title("mean_diff (value shuffle)", fontsize=20)
 
-    plt.subplot(1, 3, 3)
+    ax = plt.subplot(1, 3, 3)
     if df["mean_diff_FDR_pairs"].notna().any():
-        plt.hist(df["mean_diff_FDR_pairs"].dropna().values, bins=hist_bins_summary, color="green", alpha=0.85)
-    plt.xlabel("Estimated FDR")
-    plt.yscale("log")
-    plt.ylim(1e-1, max_val * log_ylim_pad)
-    plt.title("mean_diff (bait–prey shuffle)")
+        ax.hist(df["mean_diff_FDR_pairs"].dropna().values, bins=hist_bins_summary,
+                color="green", alpha=0.85)
+    ax.set_xlabel("Estimated FDR", fontsize=20)
+    ax.tick_params(axis="x", labelsize=18)
+    ax.tick_params(axis="y", labelsize=18)
+    ax.set_yscale("log")
+    ax.set_ylim(1e-1, max_val * log_ylim_pad)
+    ax.set_title("mean_diff (bait–prey shuffle)", fontsize=20)
 
     plt.tight_layout()
     pdf_hist = os.path.join(outdir, f"fdr_histogram_comparison_all_methods{save_prefix}.pdf")
@@ -230,20 +248,24 @@ def plot_fdr_robustness(
     # -----------------------------
     # Plot 3: Annotated bar histograms on shared log scale
     # -----------------------------
-    # Precompute histograms to annotate
     def _histogram(col, bins):
         vals = df[col].dropna().values
         if len(vals) == 0:
-            return (np.zeros(bins if isinstance(bins, int) else len(bins)-1, dtype=int), 
-                    np.linspace(0, 1, (bins if isinstance(bins, int) else len(bins)-1) + 1))
+            # empty hist
+            if isinstance(bins, int):
+                return np.zeros(bins, dtype=int), np.linspace(0, 1, bins + 1)
+            else:
+                return np.zeros(len(bins) - 1, dtype=int), np.asarray(bins)
         return np.histogram(vals, bins=bins)
 
     h1, b1 = _histogram(fdr_col, hist_bins_summary)
     h2, b2 = _histogram("mean_diff_FDR_shuffle", hist_bins_main)
     h3, b3 = _histogram("mean_diff_FDR_pairs", hist_bins_summary)
-    max_val2 = max(int(h1.max() if h1.size else 1),
-                   int(h2.max() if h2.size else 1),
-                   int(h3.max() if h3.size else 1))
+    max_val2 = max(
+        int(h1.max() if h1.size else 1),
+        int(h2.max() if h2.size else 1),
+        int(h3.max() if h3.size else 1),
+    )
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
     panels = [
@@ -253,16 +275,32 @@ def plot_fdr_robustness(
     ]
     for ax, hist, bins, color, title in panels:
         if hist.size:
-            ax.bar(bins[:-1], hist, width=np.diff(bins), align="center", color=color, alpha=0.85)
+            ax.bar(
+                bins[:-1],
+                hist,
+                width=np.diff(bins),
+                align="center",
+                color=color,
+                alpha=0.85,
+            )
             # annotate
             for count, x, w in zip(hist, bins[:-1], np.diff(bins)):
                 if count > 0:
-                    ax.text(x + w*0.5, count * 1.15, str(int(count)), fontsize=7, rotation=90, ha="center")
+                    ax.text(
+                        x + w * 0.5,
+                        count * 1.15,
+                        str(int(count)),
+                        fontsize=7,
+                        rotation=90,
+                        ha="center",
+                    )
         ax.set_yscale("log")
         ax.set_ylim(1e-1, max_val2 * log_ylim_pad)
-        ax.set_xlabel("Estimated FDR")
-        ax.set_title(title)
-    axes[0].set_ylabel("Number of interactions")
+        ax.set_xlabel("Estimated FDR", fontsize=18)
+        ax.tick_params(axis="x", labelsize=16)
+        ax.tick_params(axis="y", labelsize=16)
+        ax.set_title(title, fontsize=18)
+    axes[0].set_ylabel("Number of interactions", fontsize=18)
 
     plt.tight_layout()
     pdf_annot = os.path.join(outdir, f"fdr_histogram_comparison_annotated{save_prefix}.pdf")

@@ -121,6 +121,34 @@ rule plot_posneg_pr:
         python script.py --step plot_posneg_pr --config {configfile}
         """
 
+
+# GO:CC gProfiler + UpSet analysis per bait
+rule plot_go_upset:
+    input:
+        fdr=config["fdr_output"],
+        saintq=config["saintq_path"],
+        saintex=config["saintexpress_path"],
+        limma=config["limma_path"]
+    shell:
+        """
+        python script.py --step plot_go_upset --config {configfile}
+        """
+
+
+# HPA-based circular plots + stacked barplots
+rule plot_hpa:
+    input:
+        fdr=config["fdr_output"],
+        saintq=config["saintq_path"],
+        saintex=config["saintexpress_path"],
+        limma=config["limma_path"],
+        hpa=config["hpa_path"]
+    shell:
+        """
+        python script.py --step plot_hpa --config {configfile}
+        """
+
+        
 # -------------------------
 # Full pipeline (data prep + training)
 # -------------------------

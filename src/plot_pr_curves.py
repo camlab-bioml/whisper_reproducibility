@@ -2,16 +2,20 @@ def plot_pr_curve(
     features_df,
     saintq_df_raw,
     saintexpress_df_raw,
-    limma_df_raw,              # limma added
+    limma_df_raw,              # limma table
     go_cc_df,
-    gt_source='bg_large'
+    gt_source='bg_large',
+    outdir='results'
 ):
+    import os
     import pandas as pd
     import numpy as np
     import matplotlib.pyplot as plt
     import seaborn as sns
     from sklearn.metrics import auc
     from sklearn.preprocessing import MinMaxScaler
+
+    os.makedirs(outdir, exist_ok=True)
 
     # Function to add missing preys for all baits in a dataset
     def add_missing_preys(df, features_df, prey_col, fill_cols=None):
@@ -54,10 +58,11 @@ def plot_pr_curve(
         features_df[['composite_score']]
     ).flatten()
 
-    # Ground truth dict (kept as in your code)
-    gt_source = 'bg_large'
-    go_cc_df = pd.read_csv('biogrid_interactions_large_Benchmarking_BioID_DIA.csv')
-    go_cc_dict = {bait: set(go_cc_df[go_cc_df['Bait'] == bait]['Prey']) for bait in features_df['Bait'].unique()}
+    # Ground truth dict: use provided go_cc_df + gt_source
+    go_cc_dict = {
+        bait: set(go_cc_df[go_cc_df['Bait'] == bait]['Prey'])
+        for bait in features_df['Bait'].unique()
+    }
 
     # PR helpers
     def calculate_precision_recall_f1_topn(df, score_column, true_label_column, step_size=10):
@@ -124,23 +129,30 @@ def plot_pr_curve(
         combined_limma_df = pd.concat([combined_limma_df, limma_df], ignore_index=True)
 
     # Compute PR for all methods
-    recall_pu, precision_pu, f1_pu, _ = calculate_precision_recall_f1_topn(combined_pu_df, 'predicted_probability', 'true_label')
-    recall_comp, precision_comp, f1_comp, _ = calculate_precision_recall_f1_topn(combined_comp_df, 'composite_score_norm', 'true_label')
-    recall_q, precision_q, f1_q, _ = calculate_precision_recall_f1_topn(combined_saintq_df, 'AvgP', 'true_label')
-    recall_ex, precision_ex, f1_ex, _ = calculate_precision_recall_f1_topn(combined_saintexpress_df, 'AvgP', 'true_label')
+    recall_pu,    precision_pu,    f1_pu,    _ = calculate_precision_recall_f1_topn(combined_pu_df, 'predicted_probability', 'true_label')
+    recall_comp,  precision_comp,  f1_comp,  _ = calculate_precision_recall_f1_topn(combined_comp_df, 'composite_score_norm', 'true_label')
+    recall_q,     precision_q,     f1_q,     _ = calculate_precision_recall_f1_topn(combined_saintq_df, 'AvgP', 'true_label')
+    recall_ex,    precision_ex,    f1_ex,    _ = calculate_precision_recall_f1_topn(combined_saintexpress_df, 'AvgP', 'true_label')
     recall_limma, precision_limma, f1_limma, _ = calculate_precision_recall_f1_topn(combined_limma_df, 'limma_score', 'true_label')
 
     mean_f1_pu, mean_f1_comp = np.mean(f1_pu), np.mean(f1_comp)
     mean_f1_q,  mean_f1_ex  = np.mean(f1_q),  np.mean(f1_ex)
     mean_f1_limma = np.mean(f1_limma)
 
-    mean_auc_pu, std_auc_pu       = bootstrap_auc(recall_pu, precision_pu)
-    mean_auc_comp, std_auc_comp   = bootstrap_auc(recall_comp, precision_comp)
-    mean_auc_q, std_auc_q         = bootstrap_auc(recall_q, precision_q)
-    mean_auc_ex, std_auc_ex       = bootstrap_auc(recall_ex, precision_ex)
+    mean_auc_pu,    std_auc_pu    = bootstrap_auc(recall_pu,    precision_pu)
+    mean_auc_comp,  std_auc_comp  = bootstrap_auc(recall_comp,  precision_comp)
+    mean_auc_q,     std_auc_q     = bootstrap_auc(recall_q,     precision_q)
+    mean_auc_ex,    std_auc_ex    = bootstrap_auc(recall_ex,    precision_ex)
     mean_auc_limma, std_auc_limma = bootstrap_auc(recall_limma, precision_limma)
 
-    # ---- Main PR plot ----
+    # Helper for AUC@TopN
+    def auc_at_topn(df, score_col, true_col, topn):
+        df_sorted = df.sort_values(score_col, ascending=False).reset_index(drop=True)
+        df_top = df_sorted.iloc[:topn]
+        r, p, _, _ = calculate_precision_recall_f1_topn(df_top, score_col, true_col, step_size=10)
+        return auc(r, p)
+
+    # ---- Main PR plot (methods + composite) ----
     plt.figure(figsize=(8, 8))
     plt.plot(recall_pu,    precision_pu,    label=f'whisper\nAUC: {mean_auc_pu:.4f} ± {std_auc_pu:.4f}\nF1: {mean_f1_pu:.4f}', marker='o', markersize=2)
     plt.plot(recall_q,     precision_q,     label=f'SAINTq\nAUC: {mean_auc_q:.4f} ± {std_auc_q:.4f}\nF1: {mean_f1_q:.4f}', marker='o', markersize=2)
@@ -153,15 +165,9 @@ def plot_pr_curve(
     plt.title('Overall Precision vs. Recall (All Baits Combined)')
     plt.legend(loc='best')
     plt.grid(True)
-    plt.savefig(f'results/Benchmarking BioID DIA/overall_precision_vs_recall_combined_{gt_source}.pdf', dpi=300)
+    plt.tight_layout()
+    plt.savefig(os.path.join(outdir, f'overall_precision_vs_recall_combined_{gt_source}.pdf'), dpi=300)
     plt.close()
-
-    # AUC@TopN helper
-    def auc_at_topn(df, score_col, true_col, topn):
-        df_sorted = df.sort_values(score_col, ascending=False).reset_index(drop=True)
-        df_top = df_sorted.iloc[:topn]
-        r, p, _, _ = calculate_precision_recall_f1_topn(df_top, score_col, true_col, step_size=10)
-        return auc(r, p)
 
     # Individual feature baselines
     individual_features = [
@@ -196,7 +202,7 @@ def plot_pr_curve(
     plt.legend(loc='best', fontsize=8)
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(f'results/Benchmarking BioID DIA/overall_precision_vs_recall_combined_{gt_source}_with_features.pdf', dpi=300)
+    plt.savefig(os.path.join(outdir, f'overall_precision_vs_recall_combined_{gt_source}_with_features.pdf'), dpi=300)
     plt.close()
 
     # ---- AUC barplots (incl. limma) ----
@@ -211,7 +217,6 @@ def plot_pr_curve(
             auc_at_topn(combined_comp_df, 'composite_score_norm', 'true_label', 300),
         ]
     })
-
     auc_df_melted = auc_df.melt(id_vars='Method', var_name='AUC Type', value_name='AUC')
 
     plt.figure(figsize=(12, 8))
@@ -222,21 +227,21 @@ def plot_pr_curve(
     plt.yticks(fontsize=24)
     plt.legend().remove()
     plt.tight_layout()
-    plt.savefig(f'results/Benchmarking BioID DIA/auc_barplot_combined_{gt_source}.pdf', dpi=300)
+    plt.savefig(os.path.join(outdir, f'auc_barplot_combined_{gt_source}.pdf'), dpi=300)
     plt.close()
 
     # ---- Extended barplot with features ----
     feature_auc_df = pd.DataFrame(feature_auc_data)
     auc_df_extended = pd.concat([auc_df, feature_auc_df], ignore_index=True)
-    auc_df_melted = auc_df_extended.melt(id_vars='Method', var_name='AUC Type', value_name='AUC')
+    auc_df_melted_ext = auc_df_extended.melt(id_vars='Method', var_name='AUC Type', value_name='AUC')
 
     plt.figure(figsize=(14, 8))
-    sns.barplot(data=auc_df_melted, x='AUC Type', y='AUC', hue='Method', palette='tab20')
+    sns.barplot(data=auc_df_melted_ext, x='AUC Type', y='AUC', hue='Method', palette='tab20')
     plt.ylabel('AUC Value', fontsize=26)
     plt.xlabel('', fontsize=26)
     plt.xticks(fontsize=24)
     plt.yticks(fontsize=24)
     plt.legend(title='Method / Feature', ncol=4, loc='lower center', bbox_to_anchor=(0.5, -0.45), fontsize=14)
     plt.tight_layout()
-    plt.savefig(f'results/Benchmarking BioID DIA/auc_barplot_combined_{gt_source}_with_features.pdf', dpi=300)
+    plt.savefig(os.path.join(outdir, f'auc_barplot_combined_{gt_source}_with_features.pdf'), dpi=300)
     plt.close()
