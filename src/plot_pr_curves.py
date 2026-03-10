@@ -52,10 +52,10 @@ def plot_pr_curve(
     limma_df_raw_complete['adj.P.Val'] = limma_df_raw_complete['adj.P.Val'].astype(float).clip(0.0, 1.0)
     limma_df_raw_complete['limma_score'] = 1.0 - limma_df_raw_complete['adj.P.Val']
 
-    # Normalize composite score globally
+    # Normalize heuristic score globally
     features_df = features_df.copy()
-    features_df['composite_score_norm'] = MinMaxScaler().fit_transform(
-        features_df[['composite_score']]
+    features_df['heuristic_score_norm'] = MinMaxScaler().fit_transform(
+        features_df[['heuristic_score']]
     ).flatten()
 
     # Ground truth dict: use provided go_cc_df + gt_source
@@ -99,7 +99,7 @@ def plot_pr_curve(
         return float(np.mean(boot)), float(np.std(boot))
 
     # Combine datasets across all baits for each method
-    combined_pu_df, combined_comp_df = pd.DataFrame(), pd.DataFrame()
+    combined_pu_df, combined_heuristic_df = pd.DataFrame(), pd.DataFrame()
     combined_saintq_df, combined_saintexpress_df, combined_limma_df = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
     for bait in features_df['Bait'].unique():
@@ -108,7 +108,7 @@ def plot_pr_curve(
         gold = go_cc_dict[bait] & ms_preys
         bait_df['true_label'] = bait_df['Prey'].apply(lambda x: 1 if x in gold else 0)
         combined_pu_df = pd.concat([combined_pu_df, bait_df], ignore_index=True)
-        combined_comp_df = pd.concat([combined_comp_df, bait_df], ignore_index=True)
+        combined_heuristic_df = pd.concat([combined_heuristic_df, bait_df], ignore_index=True)
 
         saintq_df = saintq_df_raw_complete[saintq_df_raw_complete['Bait'] == bait].copy()
         ms_preys_q = set(saintq_df['PreyGene'])
@@ -130,17 +130,17 @@ def plot_pr_curve(
 
     # Compute PR for all methods
     recall_pu,    precision_pu,    f1_pu,    _ = calculate_precision_recall_f1_topn(combined_pu_df, 'predicted_probability', 'true_label')
-    recall_comp,  precision_comp,  f1_comp,  _ = calculate_precision_recall_f1_topn(combined_comp_df, 'composite_score_norm', 'true_label')
+    recall_heuristic,  precision_heuristic,  f1_heuristic,  _ = calculate_precision_recall_f1_topn(combined_heuristic_df, 'heuristic_score_norm', 'true_label')
     recall_q,     precision_q,     f1_q,     _ = calculate_precision_recall_f1_topn(combined_saintq_df, 'AvgP', 'true_label')
     recall_ex,    precision_ex,    f1_ex,    _ = calculate_precision_recall_f1_topn(combined_saintexpress_df, 'AvgP', 'true_label')
     recall_limma, precision_limma, f1_limma, _ = calculate_precision_recall_f1_topn(combined_limma_df, 'limma_score', 'true_label')
 
-    mean_f1_pu, mean_f1_comp = np.mean(f1_pu), np.mean(f1_comp)
+    mean_f1_pu, mean_f1_heuristic = np.mean(f1_pu), np.mean(f1_heuristic)
     mean_f1_q,  mean_f1_ex  = np.mean(f1_q),  np.mean(f1_ex)
     mean_f1_limma = np.mean(f1_limma)
 
     mean_auc_pu,    std_auc_pu    = bootstrap_auc(recall_pu,    precision_pu)
-    mean_auc_comp,  std_auc_comp  = bootstrap_auc(recall_comp,  precision_comp)
+    mean_auc_heuristic,  std_auc_heuristic  = bootstrap_auc(recall_heuristic,  precision_heuristic)
     mean_auc_q,     std_auc_q     = bootstrap_auc(recall_q,     precision_q)
     mean_auc_ex,    std_auc_ex    = bootstrap_auc(recall_ex,    precision_ex)
     mean_auc_limma, std_auc_limma = bootstrap_auc(recall_limma, precision_limma)
@@ -152,13 +152,13 @@ def plot_pr_curve(
         r, p, _, _ = calculate_precision_recall_f1_topn(df_top, score_col, true_col, step_size=10)
         return auc(r, p)
 
-    # ---- Main PR plot (methods + composite) ----
+    # ---- Main PR plot (methods + heuristic) ----
     plt.figure(figsize=(8, 8))
     plt.plot(recall_pu,    precision_pu,    label=f'whisper\nAUC: {mean_auc_pu:.4f} ± {std_auc_pu:.4f}\nF1: {mean_f1_pu:.4f}', marker='o', markersize=2)
     plt.plot(recall_q,     precision_q,     label=f'SAINTq\nAUC: {mean_auc_q:.4f} ± {std_auc_q:.4f}\nF1: {mean_f1_q:.4f}', marker='o', markersize=2)
     plt.plot(recall_ex,    precision_ex,    label=f'SAINTexpress\nAUC: {mean_auc_ex:.4f} ± {std_auc_ex:.4f}\nF1: {mean_f1_ex:.4f}', marker='o', markersize=2)
     plt.plot(recall_limma, precision_limma, label=f'limma\nAUC: {mean_auc_limma:.4f} ± {std_auc_limma:.4f}\nF1: {mean_f1_limma:.4f}', marker='o', markersize=2)
-    plt.plot(recall_comp,  precision_comp,  label=f'Composite\nAUC: {mean_auc_comp:.4f} ± {std_auc_comp:.4f}\nF1: {mean_f1_comp:.4f}', marker='o', markersize=2)
+    plt.plot(recall_heuristic,  precision_heuristic,  label=f'heuristic\nAUC: {mean_auc_heuristic:.4f} ± {std_auc_heuristic:.4f}\nF1: {mean_f1_heuristic:.4f}', marker='o', markersize=2)
 
     plt.xlabel('Recall')
     plt.ylabel('Precision')
@@ -191,7 +191,7 @@ def plot_pr_curve(
     plt.plot(recall_q,     precision_q,     label=f'SAINTq\nAUC: {mean_auc_q:.4f} ± {std_auc_q:.4f}\nF1: {mean_f1_q:.4f}', marker='o', markersize=2)
     plt.plot(recall_ex,    precision_ex,    label=f'SAINTexpress\nAUC: {mean_auc_ex:.4f} ± {std_auc_ex:.4f}\nF1: {mean_f1_ex:.4f}', marker='o', markersize=2)
     plt.plot(recall_limma, precision_limma, label=f'limma\nAUC: {mean_auc_limma:.4f} ± {std_auc_limma:.4f}\nF1: {mean_f1_limma:.4f}', marker='o', markersize=2)
-    plt.plot(recall_comp,  precision_comp,  label=f'Composite\nAUC: {mean_auc_comp:.4f} ± {std_auc_comp:.4f}\nF1: {mean_f1_comp:.4f}', marker='o', markersize=2)
+    plt.plot(recall_heuristic,  precision_heuristic,  label=f'heuristic\nAUC: {mean_auc_heuristic:.4f} ± {std_auc_heuristic:.4f}\nF1: {mean_f1_heuristic:.4f}', marker='o', markersize=2)
 
     for r, p, label, auc_val, std_val, f1_val in feature_pr_curves:
         plt.plot(r, p, label=f'{label}\nAUC: {auc_val:.4f} ± {std_val:.4f}\nF1: {f1_val:.4f}', linestyle='--')
@@ -207,14 +207,14 @@ def plot_pr_curve(
 
     # ---- AUC barplots (incl. limma) ----
     auc_df = pd.DataFrame({
-        'Method': ['whisper', 'SAINTq', 'SAINTexpress', 'limma', 'Composite score'],
-        'Total AUC': [mean_auc_pu, mean_auc_q, mean_auc_ex, mean_auc_limma, mean_auc_comp],
+        'Method': ['whisper', 'SAINTq', 'SAINTexpress', 'limma', 'heuristic score'],
+        'Total AUC': [mean_auc_pu, mean_auc_q, mean_auc_ex, mean_auc_limma, mean_auc_heuristic],
         'AUC@Top300': [
             auc_at_topn(combined_pu_df, 'predicted_probability', 'true_label', 300),
             auc_at_topn(combined_saintq_df, 'AvgP', 'true_label', 300),
             auc_at_topn(combined_saintexpress_df, 'AvgP', 'true_label', 300),
             auc_at_topn(combined_limma_df, 'limma_score', 'true_label', 300),
-            auc_at_topn(combined_comp_df, 'composite_score_norm', 'true_label', 300),
+            auc_at_topn(combined_heuristic_df, 'heuristic_score_norm', 'true_label', 300),
         ]
     })
     auc_df_melted = auc_df.melt(id_vars='Method', var_name='AUC Type', value_name='AUC')

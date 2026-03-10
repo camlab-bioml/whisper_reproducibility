@@ -27,7 +27,7 @@ def run_feature_engineering(intensity_df: pd.DataFrame, controls: list) -> pd.Da
         Aggregated feature table with one row per (Bait, Prey) containing:
         ['Bait','Prey','log_fold_change','snr','mean_diff','median_diff',
          'replicate_fold_change_sd','bait_cv','bait_control_sd_ratio','zero_or_neg_fc',
-         'nonzero_reps','reps_above_ctrl_med','single_rep_flag','composite_score','global_cv']
+         'nonzero_reps','reps_above_ctrl_med','single_rep_flag','heuristic_score','global_cv']
         The table is also written to 'features.csv'.
     """
 
@@ -147,14 +147,14 @@ def run_feature_engineering(intensity_df: pd.DataFrame, controls: list) -> pd.Da
             columns=scale_cols, index=bait_features_df.index
         )
 
-        # composite score = mean of main signal features
-        bait_features_df['composite_score'] = scaled[['log_fold_change','snr','mean_diff','median_diff']].mean(axis=1)
+        # heuristic score = mean of main signal features
+        bait_features_df['heuristic_score'] = scaled[['log_fold_change','snr','mean_diff','median_diff']].mean(axis=1)
 
         # map global CV (NaN if not computed—e.g., prey was bait/birA everywhere)
         bait_features_df['global_cv'] = bait_features_df['Prey'].map(global_cv_dict)
 
         # sort and collect
-        all_bait_features.append(bait_features_df.sort_values(by='composite_score', ascending=False))
+        all_bait_features.append(bait_features_df.sort_values(by='heuristic_score', ascending=False))
 
     aggregated_features_df = pd.concat(all_bait_features, ignore_index=True)
 
@@ -271,7 +271,7 @@ def run_feature_engineering_peptide(intensity_df: pd.DataFrame, controls: list) 
 
         bait_features = pd.DataFrame(features)
 
-        # --- Scaling and composite score ---
+        # --- Scaling and heuristic score ---
         scale_cols = [
             "log_fold_change", "snr", "mean_diff", "median_diff",
             "replicate_fold_change_sd", "bait_cv", "bait_control_sd_ratio",
@@ -283,7 +283,7 @@ def run_feature_engineering_peptide(intensity_df: pd.DataFrame, controls: list) 
             columns=scale_cols, index=bait_features.index,
         )
 
-        bait_features["composite_score"] = scaled_df[
+        bait_features["heuristic_score"] = scaled_df[
             ["log_fold_change", "snr", "mean_diff", "median_diff"]
         ].mean(axis=1)
 
@@ -291,7 +291,7 @@ def run_feature_engineering_peptide(intensity_df: pd.DataFrame, controls: list) 
             lambda r: global_cv.get((r["Protein"], r["Peptide"]), np.nan), axis=1
         )
 
-        all_bait_features.append(bait_features.sort_values("composite_score", ascending=False))
+        all_bait_features.append(bait_features.sort_values("heuristic_score", ascending=False))
 
     aggregated_features_df = pd.concat(all_bait_features, ignore_index=True)
     aggregated_features_df.to_csv("features_peptide.csv", index=False)
@@ -409,7 +409,7 @@ def run_feature_engineering_fragment(intensity_df: pd.DataFrame, controls: list)
 
         bait_features = pd.DataFrame(features)
 
-        # --- Scale and composite score (consistent with protein/peptide) ---
+        # --- Scale and heuristic score (consistent with protein/peptide) ---
         scale_cols = [
             "log_fold_change", "snr", "mean_diff", "median_diff",
             "replicate_fold_change_sd", "bait_cv", "bait_control_sd_ratio",
@@ -421,7 +421,7 @@ def run_feature_engineering_fragment(intensity_df: pd.DataFrame, controls: list)
             columns=scale_cols, index=bait_features.index,
         )
 
-        bait_features["composite_score"] = scaled_df[
+        bait_features["heuristic_score"] = scaled_df[
             ["log_fold_change", "snr", "mean_diff", "median_diff"]
         ].mean(axis=1)
 
@@ -429,7 +429,7 @@ def run_feature_engineering_fragment(intensity_df: pd.DataFrame, controls: list)
             lambda r: global_cv.get((r["Protein"], r["Peptide"], r["Fragment"]), np.nan), axis=1
         )
 
-        all_bait_features.append(bait_features.sort_values("composite_score", ascending=False))
+        all_bait_features.append(bait_features.sort_values("heuristic_score", ascending=False))
 
     aggregated_features_df = pd.concat(all_bait_features, ignore_index=True)
     aggregated_features_df.to_csv("features_fragment.csv", index=False)

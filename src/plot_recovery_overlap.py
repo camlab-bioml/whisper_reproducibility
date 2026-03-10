@@ -23,12 +23,12 @@ def recovery_overlap(
 ):
     """
     Plot recovery / database-overlap curves for WHISPER, SAINTq, SAINTexpress, limma,
-    and the composite score, with optional individual feature baselines.
+    and the heuristic score, with optional individual feature baselines.
 
     Parameters
     ----------
     features_df : pd.DataFrame
-        WHISPER feature/FDR output (must contain Bait, Prey, composite_score, predicted_probability).
+        WHISPER feature/FDR output (must contain Bait, Prey, heuristic_score, predicted_probability).
     saintq_df_raw : pd.DataFrame
         Raw SAINTq table (Bait, PreyGene, BFDR, AvgP).
     saintexpress_df_raw : pd.DataFrame
@@ -112,17 +112,17 @@ def recovery_overlap(
     df_ex = prepare_method_df(saintexpress_df, 'Bait', 'PreyGene', 'AvgP',        'SAINTexpress')
     df_li = prepare_method_df(limma_df,        'Bait', 'Prey',     'limma_score', 'limma')
 
-    # Normalize composite score globally
+    # Normalize heuristic score globally
     features_df = features_df.copy()
-    features_df['composite_score_norm'] = MinMaxScaler().fit_transform(
-        features_df[['composite_score']]
+    features_df['heuristic_score_norm'] = MinMaxScaler().fit_transform(
+        features_df[['heuristic_score']]
     ).flatten()
-    df_comp = features_df[['Bait', 'Prey', 'composite_score_norm']].copy()
-    df_comp.columns = ['Bait', 'Prey', 'Score']
-    df_comp['Method'] = 'Composite score'
+    df_heuristic = features_df[['Bait', 'Prey', 'heuristic_score_norm']].copy()
+    df_heuristic.columns = ['Bait', 'Prey', 'Score']
+    df_heuristic['Method'] = 'heuristic score'
 
     # Combine all methods
-    df_all = pd.concat([df_pu, df_q, df_ex, df_li, df_comp], ignore_index=True)
+    df_all = pd.concat([df_pu, df_q, df_ex, df_li, df_heuristic], ignore_index=True)
 
     # Evaluate overlap across top N interactions
     step = 10
@@ -134,7 +134,7 @@ def recovery_overlap(
         'SAINTq':           '#ff7f0e',
         'SAINTexpress':     '#2ca02c',
         'limma':            '#9467bd',
-        'Composite score':  'crimson',
+        'heuristic score':  'crimson',
     }
 
     # --- Plot 1: main methods (no features) ---

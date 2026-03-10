@@ -41,7 +41,7 @@ def plot_sensitivity(
     ),
     bait_col: str = "Bait",
     prey_col: str = "Prey",
-    composite_col: str = "composite_score",
+    heuristic_col: str = "heuristic_score",
     single_rep_flag_col: str = "single_rep_flag",
     prob_col: str = "predicted_probability",
     fdr_col: str = "FDR",
@@ -55,7 +55,7 @@ def plot_sensitivity(
     Sensitivity analysis over (initial_positives, initial_negatives) for whisper PU labeling.
 
     For each (N_pos, N_neg):
-      - Cluster baits (top-50 composite std), pick "strong" cluster
+      - Cluster baits (top-50 heuristic std), pick "strong" cluster
       - Label top N_pos per strong bait as positives (excl. single-replicate spikes if available)
       - Label N_neg from bottom per bait as negatives
       - Train scaler + Bagging(RandomForest) on labeled data
@@ -78,7 +78,7 @@ def plot_sensitivity(
     rng = np.random.default_rng(seed)
 
     # basic checks
-    needed = set([bait_col, prey_col, composite_col]) | set(feature_columns)
+    needed = set([bait_col, prey_col, heuristic_col]) | set(feature_columns)
     missing = [c for c in needed if c not in features_df.columns]
     if missing:
         raise ValueError(f"features_df missing columns: {missing}")
@@ -98,9 +98,9 @@ def plot_sensitivity(
 
             df = df_base.copy()
 
-            # ---------- Bait clustering (top-50 composite std) ----------
+            # ---------- Bait clustering (top-50 heuristic std) ----------
             top50_std = (
-                df.groupby(bait_col)[composite_col]
+                df.groupby(bait_col)[heuristic_col]
                 .apply(lambda s: s.nlargest(50).std())
                 .fillna(0.0)
             )
@@ -134,7 +134,7 @@ def plot_sensitivity(
                 bait_df = df[df[bait_col] == bait]
                 n_pos = bait_pos_quota[bait]
                 if n_pos > 0:
-                    ranked = bait_df.sort_values(composite_col, ascending=False)
+                    ranked = bait_df.sort_values(heuristic_col, ascending=False)
                     if has_single_flag:
                         ranked = ranked[ranked[single_rep_flag_col] != 1]
                     top_pos_idx = ranked.index[:n_pos]
@@ -142,7 +142,7 @@ def plot_sensitivity(
 
                 # negatives from bottom (exclude chosen positives)
                 remaining = bait_df.drop(index=y_labels[y_labels == 1].index, errors="ignore")
-                bottom_neg_idx = remaining[composite_col].nsmallest(N_neg).index
+                bottom_neg_idx = remaining[heuristic_col].nsmallest(N_neg).index
                 y_labels.loc[bottom_neg_idx] = -1
 
             labeled_idx = y_labels[y_labels != 0].index

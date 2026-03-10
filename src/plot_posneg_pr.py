@@ -36,7 +36,7 @@ def plot_posneg_pr(
     ),
     bait_col: str = "Bait",
     prey_col: str = "Prey",
-    composite_col: str = "composite_score",
+    heuristic_col: str = "heuristic_score",
     single_rep_flag_col: str = "single_rep_flag",
     n_bootstrap: int = 100,
     topn_for_auc: int = 300,
@@ -60,9 +60,9 @@ def plot_posneg_pr(
     def _run_pu(df_real: pd.DataFrame, N_pos=15, N_neg=200):
         np.random.seed(seed)
 
-        # cluster baits by top-50 std of composite
+        # cluster baits by top-50 std of heuristic
         top50_std = (
-            df_real.groupby(bait_col)[composite_col]
+            df_real.groupby(bait_col)[heuristic_col]
             .apply(lambda s: s.nlargest(50).std())
             .fillna(0.0)
         )
@@ -94,7 +94,7 @@ def plot_posneg_pr(
             sub = df_real[df_real[bait_col] == b]
             n_pos = pos_quota[b]
             if n_pos > 0:
-                ranked = sub.sort_values(composite_col, ascending=False)
+                ranked = sub.sort_values(heuristic_col, ascending=False)
                 if has_single_flag:
                     ranked = ranked[ranked[single_rep_flag_col] != 1]
                 top_idx = ranked.index[:n_pos]
@@ -102,7 +102,7 @@ def plot_posneg_pr(
 
             # negatives from bottom excluding chosen positives
             remaining = sub.drop(index=y_labels[y_labels == 1].index, errors="ignore")
-            neg_idx = remaining[composite_col].nsmallest(N_neg).index
+            neg_idx = remaining[heuristic_col].nsmallest(N_neg).index
             y_labels.loc[neg_idx] = -1
 
         labeled_idx = y_labels[y_labels != 0].index

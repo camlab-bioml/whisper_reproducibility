@@ -17,7 +17,7 @@ def run_training_and_fdr(    features_df: pd.DataFrame,
     Trains a learning model using Bagging with Random Forest, and estimates FDR using bait-specific decoys.
 
     Parameters:
-        df_real (pd.DataFrame): Feature-engineered dataframe with 'composite_score', 'Bait', and other features.
+        df_real (pd.DataFrame): Feature-engineered dataframe with 'heuristic_score', 'Bait', and other features.
         initial_positives (int): Number of initial positives per strong bait (default = 10).
         initial_negatives (int): Number of negatives per bait (default = 200).
 
@@ -38,7 +38,7 @@ def run_training_and_fdr(    features_df: pd.DataFrame,
 
     # === Hierarchical clustering of baits ===
     bait_top50_stds = {
-        bait: df_real[df_real['Bait'] == bait]['composite_score'].nlargest(50).std()
+        bait: df_real[df_real['Bait'] == bait]['heuristic_score'].nlargest(50).std()
         for bait in df_real['Bait'].unique()
     }
     bait_names  = np.array(list(bait_top50_stds.keys()))
@@ -74,13 +74,13 @@ def run_training_and_fdr(    features_df: pd.DataFrame,
         N_pos = bait_scaled_positives[bait]
 
         if N_pos > 0:
-            ranked = bait_df.sort_values('composite_score', ascending=False)
+            ranked = bait_df.sort_values('heuristic_score', ascending=False)
             elig_pos = ranked[ranked['single_rep_flag'] != 1]
             top_pos = elig_pos.index[:N_pos]
             y_labels.loc[top_pos] = 1
 
             remaining = bait_df.drop(index=top_pos, errors='ignore')
-            bottom_neg = remaining['composite_score'].nsmallest(initial_negatives).index
+            bottom_neg = remaining['heuristic_score'].nsmallest(initial_negatives).index
             y_labels.loc[bottom_neg] = -1
 
     # === Train classifier ===
@@ -165,7 +165,7 @@ def run_train_and_fdr_peptide(
 
     Expected columns in `features_df`:
       - Bait, Protein, Peptide
-      - composite_score, global_cv (optional), single_rep_flag (optional)
+      - heuristic_score, global_cv (optional), single_rep_flag (optional)
       - Feature columns:
           ['log_fold_change','snr','mean_diff','median_diff',
            'replicate_fold_change_sd','bait_cv','bait_control_sd_ratio','zero_or_neg_fc']
@@ -191,7 +191,7 @@ def run_train_and_fdr_peptide(
 
     # ----- Cluster baits to identify "strong" cluster (same logic as protein) -----
     bait_top50_stds = {
-        b: df[df["Bait"] == b]["composite_score"].nlargest(50).std()
+        b: df[df["Bait"] == b]["heuristic_score"].nlargest(50).std()
         for b in df["Bait"].unique()
     }
     bait_names = np.array(list(bait_top50_stds.keys()))
@@ -218,14 +218,14 @@ def run_train_and_fdr_peptide(
         sub = df[df["Bait"] == bait].copy()
         n_pos = bait_pos_quota[bait]
         if n_pos > 0:
-            ranked = sub.sort_values("composite_score", ascending=False)
+            ranked = sub.sort_values("heuristic_score", ascending=False)
             # exclude single-replicate spikes if column exists
             elig = ranked[ranked.get("single_rep_flag", 0) != 1]
             pos_idx = elig.index[:n_pos]
             y.loc[pos_idx] = 1
 
             remaining = sub.drop(index=pos_idx, errors="ignore")
-            neg_idx = remaining["composite_score"].nsmallest(initial_negatives).index
+            neg_idx = remaining["heuristic_score"].nsmallest(initial_negatives).index
             y.loc[neg_idx] = -1
 
     labeled_idx = y[y != 0].index
@@ -335,7 +335,7 @@ def run_train_and_fdr_fragment(
 
     Expected columns in `features_df`:
       - Bait, Protein, Peptide, Fragment
-      - composite_score, global_cv (optional), single_rep_flag (optional)
+      - heuristic_score, global_cv (optional), single_rep_flag (optional)
       - Feature columns:
           ['log_fold_change','snr','mean_diff','median_diff',
            'replicate_fold_change_sd','bait_cv','bait_control_sd_ratio','zero_or_neg_fc']
@@ -365,7 +365,7 @@ def run_train_and_fdr_fragment(
 
     # ---------- Cluster baits to identify "strong" set ----------
     bait_top50_stds = {
-        b: df[df["Bait"] == b]["composite_score"].nlargest(50).std()
+        b: df[df["Bait"] == b]["heuristic_score"].nlargest(50).std()
         for b in df["Bait"].unique()
     }
     bait_names = np.array(list(bait_top50_stds.keys()))
@@ -392,13 +392,13 @@ def run_train_and_fdr_fragment(
         sub = df[df["Bait"] == bait].copy()
         n_pos = bait_pos_quota[bait]
         if n_pos > 0:
-            ranked = sub.sort_values("composite_score", ascending=False)
+            ranked = sub.sort_values("heuristic_score", ascending=False)
             elig = ranked[ranked.get("single_rep_flag", 0) != 1]  # exclude single-rep spikes if present
             pos_idx = elig.index[:n_pos]
             y.loc[pos_idx] = 1
 
             remaining = sub.drop(index=pos_idx, errors="ignore")
-            neg_idx = remaining["composite_score"].nsmallest(initial_negatives).index
+            neg_idx = remaining["heuristic_score"].nsmallest(initial_negatives).index
             y.loc[neg_idx] = -1
 
     labeled_idx = y[y != 0].index
