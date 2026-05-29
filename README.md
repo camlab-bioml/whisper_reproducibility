@@ -1,6 +1,6 @@
 # WHISPER: Weak Heuristic Inference for Supervisory Protein intERaction mapping (reproducibility)
 
-This repository provides a Snakemake pipeline for reproducing results in manuscript _Scoring protein-protein interactions with weakly supervised learning (Kasmaeifar et al., 2026)_.
+This repository provides a Snakemake pipeline for reproducing results in manuscript _Predicting protein interaction and proximity evidence with weakly supervised learning (Kasmaeifar et al., 2026)_.
 
 ---
 
