@@ -52,11 +52,7 @@ def bait_terms(gaf, dag, bait, aspect_code):
 
 
 def fetch_members(terms, cache, gp):
-    """term -> member gene symbols from g:Profiler, cached on disk.
 
-    A failed lookup is reported rather than cached as an empty set, which
-    would be indistinguishable from a term that genuinely has no members.
-    """
     missing = [t for t in sorted(terms) if t not in cache]
     if not missing:
         return []
@@ -80,7 +76,7 @@ def gold_set(terms, cache, bait, cap):
     preys, kept = set(), 0
     for term in terms:
         members = set(cache.get(term, []))
-        members.discard(bait)                 # self removed before the size test
+        members.discard(bait)           
         if 1 < len(members) <= cap:
             preys |= members
             kept += 1
@@ -88,8 +84,7 @@ def gold_set(terms, cache, bait, cap):
 
 
 def generate_references(baits, cap, outdir, gaf_file, obo_file, cache_file):
-    """Write go_<aspect>_interactions.csv and reference_summary.csv to outdir.
-    Terms missing from the cache are fetched from g:Profiler and added to it."""
+
     from goatools.obo_parser import GODag
     os.makedirs(outdir, exist_ok=True)
     dag = GODag(obo_file)
@@ -122,8 +117,7 @@ def generate_references(baits, cap, outdir, gaf_file, obo_file, cache_file):
 # ---------------------------------------------------------------- benchmark
 
 def figure(auc, out_pdf, dataset_name, only=None):
-    """One panel per aspect; Total AUC and AUC@Top300 within each. `only`
-    restricts the bars to those methods (same values, fewer bars)."""
+
     aspects = [a for a in ASPECTS if a in set(auc['aspect'])]
     methods = [m for m in (only or METHODS) if m in set(auc['Method'])]
     auc = auc[auc['Method'].isin(methods)]
@@ -146,7 +140,7 @@ def figure(auc, out_pdf, dataset_name, only=None):
             ax.errorbar(xs, sub['AUC'], yerr=sub['Std'], fmt='none', c='black',
                         capsize=3)
         ax.set_ylabel('AUC Value', fontsize=22)
-        # Fixed 0-1, as the main AUC bar plots, so panels line up.
+      
         ax.set_ylim(0, 1)
         ax.set_xlabel('', fontsize=22)
         ax.set_title(f'GO:{aspect}', fontsize=20)
@@ -165,8 +159,7 @@ def figure(auc, out_pdf, dataset_name, only=None):
 
 
 def run_dataset(cfg, reference_dir):
-    """cfg: the dictionary src.benchmark.run_dataset takes; reference_dir holds
-    go_<CC|BP|MF|ALL>_interactions.csv."""
+
     outdir = os.path.join(cfg['outdir'], OUT_SUBDIR)
     os.makedirs(outdir, exist_ok=True)
     print(f'\n{"=" * 72}\n{cfg["name"]}\n{"=" * 72}')

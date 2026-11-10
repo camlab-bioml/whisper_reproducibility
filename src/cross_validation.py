@@ -104,7 +104,6 @@ def train_cv(features_csv, initial_positives, out_csv, initial_negatives=200):
 
 
 def evaluate(datasets, out_dir):
-    """datasets: [(benchmark cfg, CV csv)] in display order."""
     os.makedirs(out_dir, exist_ok=True)
     rows = []
     for cfg, cv_path in datasets:
@@ -117,7 +116,6 @@ def evaluate(datasets, out_dir):
 
 
 def auc_of(score, true):
-    """Total AUC and AUC@Top300 of one ranking, as in the main figures."""
     score = np.where(np.isnan(score), -np.inf, score)
     t = pr.tie_averaged_labels(score, true)
     return {lab: pr._pr_auc_from_sorted(t if n is None else t[:n])
@@ -125,7 +123,6 @@ def auc_of(score, true):
 
 
 def evaluate_dataset(cfg, cv_path):
-    """Per-fold AUC rows for one dataset. cfg: the src.benchmark dictionary."""
     name = cfg['name']
     cv = pd.read_csv(cv_path)
     fold_cols = [f'prob_fold{k}' for k in range(N_SPLITS)]
@@ -134,13 +131,10 @@ def evaluate_dataset(cfg, cv_path):
         raise SystemExit(f'{name}: {cv_path} has no {missing}. '
                          f'Run the cross_validation step first.')
 
-    # Every method's table exactly as the main benchmark loads it.
     features_df, frames = pr.load_new_methods(cfg, None)
     frames.update(pr.load_old_methods(cfg, features_df))
     frames['WHISPER'] = (features_df, 'Prey', 'predicted_probability')
 
-    # The CV table holds the same rows in the same order as the deployed
-    # table; the fold columns are carried across by position, after checking.
     if len(cv) != len(features_df) or not (
             cv['Bait'].astype(str).values
             == features_df['Bait'].astype(str).values).all():
@@ -164,7 +158,6 @@ def evaluate_dataset(cfg, cv_path):
         gt = gt[gt['Prey'].isin(identified)]
         gold = {b: set(gt[gt['Bait'] == b]['Prey']) for b in baits}
 
-        # One pair order shared by every method, as in paired_bootstrap_aucs.
         keyed = {}
         for m in present:
             df, prey_col, score_col = frames[m]

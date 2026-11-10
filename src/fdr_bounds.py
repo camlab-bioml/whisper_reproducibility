@@ -231,7 +231,6 @@ def _label_permutation_scores(df, train_baits, n_positives):
 
 
 def null_q(features_csv, initial_positives):
-    """WHISPER refitted, and the q of every pair under each null."""
     scored, model, scaler, y = fit(pd.read_csv(features_csv), initial_positives, N_NEGATIVES,
                                    n_jobs=-1)
     elig = ~scored['is_inert'].to_numpy()
@@ -246,8 +245,7 @@ def null_q(features_csv, initial_positives):
 
 
 def run_nulls(cfg, lists):
-    """cfg: features, initial_positives, references, results_dir, map_identifiers,
-    gaf_file."""
+
     out_dir = os.path.join(cfg['results_dir'], 'fdr_bounds_nulls')
     os.makedirs(out_dir, exist_ok=True)
     q = null_q(cfg['features'], cfg['initial_positives'])
@@ -300,8 +298,7 @@ def _log_axes(ax, top):
 
 
 def plot_bounds(res, key, groups, colors, titles, dataset, out_pdf, log=False, hits=False):
-    """One panel per method (Sup. 12) or, with hits, a bounds panel and a
-    number-of-hits panel per null (Sup. 13); x axis nominal FDR up to 0.1."""
+
     res = res[res['nominal_q'] <= X_MAX + 1e-12]
     ncol = len(groups) * (2 if hits else 1)
     fig, axes = plt.subplots(1, ncol, figsize=((5.4 if hits else 2.7) * len(groups), 3.6),

@@ -44,17 +44,14 @@ def weak_labels(df_real, df_eligible, strong, initial_positives, initial_negativ
 
 
 def build_model(seed=42, n_jobs=None, rf_params=None):
-    # Serial by default: parallel prediction averages the trees in a different
-    # order, which moves probabilities by ~1e-16 and flips a few decoys across
-    # ties, so the FDR then differs from the deposited one by up to ~1e-3.
+
     rf = RandomForestClassifier(random_state=seed, **{"n_estimators": 100, **(rf_params or {})})
     return BaggingClassifier(estimator=rf, n_estimators=100, random_state=seed,
                              n_jobs=n_jobs)
 
 
 def monotone_q(real_probs, decoy_probs, n_replicates, query_probs):
-    """Pooled target-decoy FDR with the running-minimum transform, read off
-    for `query_probs` at the nearest real probability at or below each."""
+
     decoy = np.sort(np.asarray(decoy_probs))
     cuts = np.sort(np.unique(real_probs))
     n_real = len(real_probs) - np.searchsorted(np.sort(real_probs), cuts, side="left")
@@ -67,8 +64,7 @@ def monotone_q(real_probs, decoy_probs, n_replicates, query_probs):
 
 def fit(features_df, initial_positives=15, initial_negatives=200, level="protein",
         seed=42, n_jobs=None, rf_params=None):
-    """Weak labels, fitted model and scores. Returns (scored table sorted by
-    bait and identifier, model, scaler, weak labels)."""
+
     id_col = "Prey" if level == "protein" else "Protein"
     df_real = features_df.sort_values(["Bait", id_col]).reset_index(drop=True)
     if level != "protein":
@@ -92,11 +88,7 @@ def fit(features_df, initial_positives=15, initial_negatives=200, level="protein
 
 def run_training_and_fdr(features_df, initial_positives=15, initial_negatives=200,
                          n_decoy_replicates=30, level="protein", seed=42, rf_params=None):
-    """Score every pair and estimate its FDR.
 
-    Returns (scored table, feature importances, protein table or None). The
-    protein table is only produced for peptide- and fragment-level input.
-    """
     df_real, model, scaler, _y = fit(features_df, initial_positives, initial_negatives,
                                      level=level, seed=seed, rf_params=rf_params)
     df_eligible = df_real[~df_real["is_inert"]]

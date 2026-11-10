@@ -16,7 +16,6 @@ matplotlib.rcParams['ps.fonttype'] = 42
 matplotlib.rcParams['font.family'] = 'sans-serif'
 matplotlib.rcParams['font.sans-serif'] = ['Arial']
 
-# Filled in by run(): dataset key -> (label, results_dir), in display order.
 KEYS = []
 LABELS = {}
 RESULTS = {}
@@ -33,7 +32,6 @@ FDP_AXIS = (4e-4, [1e-3, 1e-2, 1e-1, 1],
 
 
 def zero_log_axis(ax, axis, top):
-    """Log y axis with 0 drawn at its own level and a break mark."""
     zero, ticks, labels = axis
     ax.set_yscale('log')
     ax.set_ylim(zero / 1.6, top)
@@ -53,8 +51,7 @@ def floor(v, zero):
     return zero if v <= 0 else v
 
 
-# The two figures: (CSV in each dataset, its column naming the group, the
-# groups, their colours, their legend labels, output name)
+
 FIGURES = {
     'nulls': (os.path.join('fdr_bounds_nulls', 'fdr_bounds_nulls.csv'), 'null',
               NULLS, fb.NULL_COLORS, TITLES),
@@ -143,16 +140,12 @@ def plot(df, fig_key, out_pdf):
     plt.close(fig)
 
 
-# Scatter version: x hits, y lower bound / nominal FDR; above 1 is shaded as
-# "error exceeds nominal". A null or method with no calls has no lower bound
-# and is left out; a lower bound of 0 sits on the "0" level.
 RATIO_AXIS = (0.025, [0.05, 0.1, 0.2, 0.5, 1, 2, 5],
               ['0.05', '0.1', '0.2', '0.5', '1', '2', '5'])
 RATIO_TOP = 10
 
 
-# bound markers in the scatter: filled circle lower, open circle and open
-# square the two upper bounds
+
 BOUND_MARKERS = [('lower', 'o', True, 'Lower bound (lumen proteins)'),
                  ('upper_go', 'o', False, 'Upper bound (GO:CC)'),
                  ('upper_bg', 's', False, 'Upper bound (BioGRID)')]
@@ -174,12 +167,7 @@ def better_gradient(ax, q):
 
 
 def plot_scatter(df, fig_key, out_pdf):
-    """One panel per dataset (columns) and nominal FDR (rows).
-    x: number of hits. y: estimated FDP; per null or method a thin line
-    joining its lower bound (filled circle) and its two upper bounds (open
-    circle GO:CC, open square BioGRID). Above the nominal line is shaded: a
-    lower bound there means the nominal FDR is too optimistic. Better is
-    towards the bottom right: more hits at a lower error."""
+
     _csv, _col, groups, colors, titles = FIGURES[fig_key]
     fig, axes = plt.subplots(len(LEVELS), len(KEYS),
                              figsize=(2.6 * len(KEYS), 2.9 * len(LEVELS) + 1.0),
@@ -245,8 +233,7 @@ def plot_scatter(df, fig_key, out_pdf):
 
 
 def run(datasets, out_dir):
-    """datasets: [(key, label, results_dir)] in display order; label may
-    contain a newline for the x axis."""
+
     KEYS[:] = [k for k, _l, _r in datasets]
     LABELS.clear(); LABELS.update({k: l for k, l, _r in datasets})
     RESULTS.clear(); RESULTS.update({k: r for k, _l, r in datasets})

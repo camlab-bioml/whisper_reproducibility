@@ -42,11 +42,7 @@ METHOD_COLORS = {
 
 
 def add_missing_preys(df, features_df, prey_col):
-    """Pad a method's table so every method is scored on the same pair set.
 
-    SAINTq drops preys it never scores; they re-enter at BFDR 1.0 / AvgP 0 so
-    they rank last rather than vanishing from the comparison.
-    """
     updated = pd.DataFrame()
     for bait in features_df["Bait"].unique():
         want = set(features_df[features_df["Bait"] == bait]["Prey"])
@@ -65,13 +61,7 @@ def add_missing_preys(df, features_df, prey_col):
 
 
 def tie_averaged_labels(score, true):
-    """Labels in rank order, each block of tied scores replaced by its mean.
 
-    Pairs a method scores identically have no order between them, so every
-    position in a tied block counts as the block's hit rate -- the expected
-    value under a random order of the ties. Nothing then depends on the row
-    order of the table. Unscored (NaN) pairs rank last, as one tied block.
-    """
     score = np.asarray(score, dtype=float)
     score = np.where(np.isnan(score), -np.inf, score)
     order = np.argsort(-score, kind="stable")
@@ -83,11 +73,7 @@ def tie_averaged_labels(score, true):
 
 
 def _pr_auc_from_sorted(true_sorted, step_size=STEP_SIZE):
-    """AUCPR of the curve traced by an already-ranked list of labels.
 
-    Precision at depth k is tp/k against the nominal depth, and recall is tp
-    over the positives present in the list being swept.
-    """
     n = len(true_sorted)
     if n == 0:
         return 0.0
@@ -101,15 +87,7 @@ def _pr_auc_from_sorted(true_sorted, step_size=STEP_SIZE):
 
 
 def paired_bootstrap_aucs(specs, depths, n_bootstrap=N_BOOTSTRAP, seed=0):
-    """Bootstrap every method on the SAME resampled pairs.
 
-    specs  : [(name, df, prey_col, score_col)] -- frames sharing one pair set
-    depths : {label: topn}, topn None meaning the whole ranked list
-
-    Returns {name: {label: array of n_bootstrap AUCs}}, replicate-aligned, so
-    the per-replicate difference between two methods is meaningful and a
-    paired CI can be taken from it. The resampling unit is the bait-prey pair.
-    """
     keys = [list(zip(df["Bait"].astype(str), df[prey_col].astype(str)))
             for _n, df, prey_col, _sc in specs]
 
@@ -138,7 +116,7 @@ def paired_bootstrap_aucs(specs, depths, n_bootstrap=N_BOOTSTRAP, seed=0):
     out = {name: {lab: np.empty(n_bootstrap) for lab in depths}
            for name in aligned}
     for b in range(n_bootstrap):
-        idx = rng.integers(0, n, n)          # one draw, shared by every method
+        idx = rng.integers(0, n, n)         
         for name, (score, true) in aligned.items():
             t_sorted = tie_averaged_labels(score[idx], true[idx])
             for lab, topn in depths.items():
@@ -148,7 +126,6 @@ def paired_bootstrap_aucs(specs, depths, n_bootstrap=N_BOOTSTRAP, seed=0):
 
 
 def paired_difference_ci(boot, a, b, label, alpha=0.05):
-    """Percentile CI for AUC(a) - AUC(b), taken from the shared replicates."""
     d = boot[a][label] - boot[b][label]
     return {"mean_difference": float(d.mean()),
             "ci_low": float(np.percentile(d, 100 * alpha / 2)),
@@ -157,7 +134,6 @@ def paired_difference_ci(boot, a, b, label, alpha=0.05):
 
 
 def pr_curve(df, score_col, true_col, step=STEP_SIZE):
-    """The plotted PR curve, on the same definition as the AUC above."""
     # Ties take their block's mean hit rate, as in the bootstrap AUCs.
     t = tie_averaged_labels(
         pd.to_numeric(df[score_col], errors="coerce").to_numpy(dtype=float),
@@ -178,8 +154,7 @@ def is_any_gene_in_gold(prey_str, gold_set):
 
 
 def detected_proteins():
-    """Every protein in the quantified matrix, unnamed rows excluded as the
-    feature engineering excludes them."""
+
     p = pd.read_csv(MATRIX_FILE, sep=MATRIX_SEP,
                     usecols=[MATRIX_PROTEIN_COL])[MATRIX_PROTEIN_COL]
     p = p[p.notna()].astype(str).str.strip()
@@ -187,7 +162,6 @@ def detected_proteins():
 
 
 def load_methods():
-    """WHISPER and the composite score aggregated to proteins, plus SAINTq."""
     scores = pd.read_csv(SCORES_FILE)
     prot = (scores
             .groupby(["Bait", "Protein"], as_index=False)
@@ -223,7 +197,6 @@ def load_methods():
 
 
 def bar_figure(auc_table, methods, out_pdf):
-    """AUC bars with the paired-bootstrap SD, y fixed to 0-1."""
     melted = auc_table.melt(id_vars="Method", value_vars=DEPTH_LABELS,
                             var_name="AUC Type", value_name="AUC")
     melted["Std"] = auc_table.melt(
@@ -245,8 +218,7 @@ def bar_figure(auc_table, methods, out_pdf):
     ax.set_xlabel("", fontsize=26)
     ax.tick_params(axis="x", labelsize=24)
     ax.tick_params(axis="y", labelsize=24)
-    # Titled as the protein-level bars are, at the same size, so the axes come
-    # out the same height.
+
     ax.set_title(f"Benchmarking BioID DIA ({LEVEL} level)", fontsize=18)
     plt.legend(title="Method", ncol=len(methods), loc="lower center",
                bbox_to_anchor=(0.5, -0.3), fontsize=14)
@@ -357,7 +329,6 @@ def main():
 
 
 def run(level, scores_file, saintq_file, matrix_file, references, outdir):
-    """references: [(source, file)] as in the dataset config."""
     global LEVEL, SCORES_FILE, SAINTQ_FILE, OUTDIR, MATRIX_FILE, MATRIX_SEP
     global MATRIX_PROTEIN_COL, GROUND_TRUTHS
     LEVEL, SCORES_FILE, SAINTQ_FILE, OUTDIR = level, scores_file, saintq_file, outdir

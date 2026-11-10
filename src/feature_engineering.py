@@ -24,7 +24,6 @@ ID_COLUMNS = {
 
 
 def read_matrix(path, level="protein"):
-    """Read an intensity matrix and standardise its identifier columns."""
     sep = "\t" if str(path).endswith((".tsv", ".txt")) else ","
     df = pd.read_csv(path, sep=sep)
     return df.rename(columns={"protein": "Protein", "peptide": "Peptide"})
@@ -44,12 +43,7 @@ def _control_columns(columns, controls, match):
 def run_feature_engineering(intensity_df, controls, baits=None, level="protein",
                             control_match="substring", labelling_enzyme="birA",
                             bait_self_protein=None, drop_unnamed=False):
-    """Feature table for every bait.
 
-    Returns one row per bait and identifier with the eight WHISPER features,
-    the replicate-support flags, `is_inert`, the heuristic `composite_score`
-    and the identifier's global CV across all samples.
-    """
     id_cols = ID_COLUMNS[level]
     bait_self_protein = bait_self_protein or {}
     df = intensity_df.copy()

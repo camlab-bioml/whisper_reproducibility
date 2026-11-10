@@ -50,7 +50,6 @@ def draw(curves, out_pdf, top_ks, ylabel, features=None):
 
 
 def run_dataset(cfg):
-    """cfg: the same dictionary src.benchmark.run_dataset takes."""
     outdir = cfg['outdir']
     os.makedirs(outdir, exist_ok=True)
 

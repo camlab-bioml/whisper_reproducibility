@@ -17,15 +17,12 @@ TOP_NS = [50, 100, 200, 300]
 DEPTH_LABEL = {n: f'Top {n}' for n in TOP_NS}
 DEPTH_ORDER = [DEPTH_LABEL[n] for n in TOP_NS]
 
-# Precision, well defined at any depth, is reported alongside AUCPR, which
-# needs several points to define a curve.
+
 PRECISION_NS = [10, 25, 50, 100, 200, 300]
 
-# WHISPER is compared against each of these.
 COMPARATORS = ['Heuristic score', 'SAINTq', 'SAINTexpress', 'limma']
 
-# The main script calls the composite score 'Composite score'; this figure has
-# always labelled it 'Heuristic score'.
+
 LABEL = {'Composite score': 'Heuristic score'}
 
 METHOD_COLORS_RANGE = {
@@ -74,8 +71,7 @@ def build_specs(cfg, gt_file):
 
 
 def aligned_labels(specs):
-    """Each method's tie-averaged ranked labels over the shared pair set, the
-    same alignment paired_bootstrap_aucs makes, for the precision columns."""
+
     keys = [list(zip(df['Bait'].astype(str), df[prey_col].astype(str)))
             for _n, df, prey_col, _sc in specs]
     common = set(keys[0])
@@ -99,8 +95,7 @@ def aligned_labels(specs):
 
 
 def measure(cfg, gt_source, gt_file):
-    """AUC at every depth (mean, SD over the pair bootstrap) and WHISPER's
-    paired differences under both resampling units."""
+
     specs, baits = build_specs(cfg, gt_file)
     depths = {DEPTH_LABEL[n]: n for n in TOP_NS}
     depths['Total AUC'] = None
@@ -153,8 +148,7 @@ def measure(cfg, gt_source, gt_file):
 PLOT_ORDER = DEPTH_ORDER[::-1]
 
 def plot_bars(point, cfg, gt_source, out_pdf):
-    """AUC by depth, one bar per method: mean and SD over 100 pair-bootstrap
-    replicates, as in the main figures."""
+
     a = point[point['Depth'].isin(PLOT_ORDER) & point['AUC'].notna()]
     methods = [m for m in METHOD_ORDER if m in set(a['Method'])]
 
@@ -186,14 +180,7 @@ def plot_bars(point, cfg, gt_source, out_pdf):
 
 
 def plot_paired(diff, cfg, gt_source, out_pdf):
-    """WHISPER minus each method, against ranking depth, all comparisons together.
 
-    Two panels with the same layout, one per resampling unit -- pairs (the
-    main figures' error bars) and baits (the conservative bound) -- and in each
-    one coloured series per comparison, in the bar plot's method colours. Depth
-    is on the x-axis because the question is whether the advantage holds as
-    the list shortens. A hollow marker means the interval crosses zero.
-    """
     refs = [c for c in COMPARATORS if c in set(diff['reference'])]
     if not refs:
         return False
@@ -247,7 +234,6 @@ def plot_paired(diff, cfg, gt_source, out_pdf):
     return True
 
 def run_dataset(cfg):
-    """cfg: the dictionary src.benchmark.run_dataset takes."""
     outdir = cfg['outdir']
     os.makedirs(outdir, exist_ok=True)
     for gt_source, gt_file in cfg['gts']:

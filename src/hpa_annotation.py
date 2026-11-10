@@ -16,8 +16,6 @@ from matplotlib.patches import Patch
 
 
 def run(cfg):
-    """cfg: fdr_output, limma, saintq, saintexpress, hpa_path, hpa_bait,
-    outdir; optional fdr_threshold (0.01)."""
 
     # ---------- Config ----------
     FDR_THRESHOLD = cfg.get("fdr_threshold", 0.01)
@@ -26,7 +24,6 @@ def run(cfg):
     OUT = cfg["outdir"]
     os.makedirs(OUT, exist_ok=True)
 
-    # Method colors (all will be turned into gradients)
     method_colors = {
         'Whisper':      '#003f5c',
         'SAINTq':       '#ffb347',
@@ -36,8 +33,8 @@ def run(cfg):
     method_order = ['Whisper', 'SAINTq', 'SAINTexpress', 'limma']
 
     # Gradient tuning
-    GAMMA = 1.8   # >1 emphasizes differences near the high end
-    FLOOR = 0.15  # ensures low-but-nonzero scores are still visibly colored
+    GAMMA = 1.8  
+    FLOOR = 0.15  
 
     # ---------------- LOAD DATA ----------------
     puppi_df = pd.read_csv(cfg["fdr_output"])
@@ -45,31 +42,24 @@ def run(cfg):
     saintq_df = pd.read_csv(cfg["saintq"], sep="\t")
     saintexpress_df = pd.read_csv(cfg["saintexpress"], sep="\t")
 
-    # unify LIMMA prey column
     if "Protein" in limma_df.columns and "Prey" not in limma_df.columns:
         limma_df = limma_df.rename(columns={"Protein": "Prey"})
 
-    # SAINTq writes its prey column as 'Prey'; everything below addresses both SAINT
-    # tables through 'PreyGene', as plot_upsets_go.py does.
+
     if "PreyGene" not in saintq_df.columns and "Prey" in saintq_df.columns:
         saintq_df = saintq_df.rename(columns={"Prey": "PreyGene"})
 
-    # clean multi-gene names like "X;Y;Z" -> keep first token
     def keep_first_gene(df, col):
         if col in df.columns:
             df[col] = df[col].astype(str).str.split(';').str[0].str.strip()
         return df
 
     keep_first_gene(limma_df, "Prey")
-    # The bait's own row is kept for every method. It is scored like any other pair
-    # and both ground-truth generators list each bait as its own prey, so removing
-    # it from one method only -- as this block used to do for limma -- would hide a
-    # call the other three are allowed to make.
+
     keep_first_gene(saintq_df, "PreyGene")
     keep_first_gene(saintexpress_df, "PreyGene")
     keep_first_gene(puppi_df, "Prey")
 
-    # ---------- Methods → score vectors & significance masks aligned to a prey list ----------
     def whisper_scores(prey_list):
         sub = puppi_df[puppi_df["Bait"] == bait][["Prey", "predicted_probability"]].dropna()
         best = sub.groupby("Prey")["predicted_probability"].max().to_dict()
@@ -222,7 +212,6 @@ def run(cfg):
             hpa_labels.append(lbl)
             hpa_colors.append(HPA_RING_COLORS[lbl])
 
-        # --------- NEW: reorder so preys with same HPA label are adjacent ----------
         label_rank = {lab: i for i, lab in enumerate(HPA_RING_ORDER)}
         N = len(preys)
         idx = np.arange(N)
@@ -288,10 +277,7 @@ def run(cfg):
             angle = theta[i] + dtheta/2
             rlab  = r_hpa + ring_width*0.95
             deg = (np.degrees(angle) + 360) % 360
-            # With theta zero at the top and the axis running clockwise, 0-180 is
-            # the whole right half of the circle: both the upper-right and the
-            # lower-right quarter read outward, left to right. Only the left half
-            # is flipped through 180, so nothing is ever upside down.
+
             if deg <= 180:
                 rotation = np.rad2deg(-angle + np.pi/2)
                 ha = 'left'
@@ -311,7 +297,6 @@ def run(cfg):
         ax.legend(handles=[halo_patch], loc='center left', bbox_to_anchor=(1.03, 0.28),
                   frameon=False, fontsize=10)
 
-        # --------- NEW: build HPA legend only from categories present in this plot ----------
         present_labels = []
         seen = set()
         for lbl in hpa_labels:
@@ -341,9 +326,6 @@ def run(cfg):
         make_plot_for_method(m)
 
 
-    # ============================================================
-    # Stacked bar plot of HPA categories per method
-    # ============================================================
     cats = HPA_RING_ORDER  # nuclear sublocs in your order + ['ER','Other']
     cat_colors = [HPA_RING_COLORS[c] for c in cats]
 

@@ -92,8 +92,7 @@ def plot_dotplot(enrich_df, bait, out_pdf, top_terms=10, max_term_length=40,
 
 
 def run(cfg):
-    """cfg: fdr_output, limma, saintq, saintexpress, outdir; optional
-    fdr_threshold (0.01) and max_term_size (1000)."""
+
     from gprofiler import GProfiler
     from upsetplot import UpSet, from_memberships
 

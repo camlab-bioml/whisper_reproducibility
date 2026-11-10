@@ -35,14 +35,11 @@ FEATURE_NAMES = [
 ]
 
 
-# The pooled script's depths, not the per-bait script's Top 100.
 DEPTHS = {'Total AUC': None, 'AUC@Top300': 300}
 DEPTH_LABELS = list(DEPTHS)
 N_BOOTSTRAP = 100
 
-# The three new methods join the fixed palette: teal, brown and green, distinct
-# from the navy, purple, oranges and red already in use and from the YlGnBu
-# feature gradient.
+
 METHOD_COLORS = {
     'WHISPER': '#003f5c',
     'PU Learning': '#003f5c',
@@ -60,23 +57,15 @@ METHOD_COLORS['SFINX'] = '#9c755f'
 METHOD_COLORS['PP-NSAF'] = '#59a14f'
 METHOD_COLORS['MiST'] = '#e377c2'
 
-# Prefix on every output filename. plot_precision_overall_rank_all_bestconfig.py
-# reassigns it so the tuned-model figures sit beside these rather than over them.
+
 TAG_PREFIX = 'all'
 
-# Old methods first, in the order the pooled figures use them; the reviewer's
-# methods appended after.
+
 OLD_METHODS = ['WHISPER', 'Composite score', 'SAINTq', 'SAINTexpress', 'limma']
 NEW_METHODS = ['CompPASS', 'SFINX', 'PP-NSAF', 'MiST']
 ALL_METHODS = OLD_METHODS + NEW_METHODS
 
-# The main figure keeps the methods in the study's scope -- built for intensity
-# data and scoring against negative controls -- which are the original ones.
-# CompPASS and PP-NSAF were designed for spectral counts and SFINX for peptide
-# counts; CompPASS and MiST use no controls. They appear in the supplementary
-# figure with the individual features. The exception is BioID DDA spc, the one
-# count dataset, where the count-based methods are used as designed and so stay
-# in the main figure.
+
 MAIN_METHODS = OLD_METHODS
 
 
@@ -131,11 +120,7 @@ def paired_bootstrap_aucs_by_bait(specs, depths, baits,
 # =============================================================================
 
 def add_missing_preys(df, features_df, prey_col):
-    """Pad a method's table so every method is scored on the same pair set.
 
-    SAINT drops preys it never scores; they re-enter at BFDR 1.0 / AvgP 0 so
-    they rank last rather than vanishing from the comparison.
-    """
     updated_df = pd.DataFrame()
     for bait in features_df['Bait'].unique():
         unique_preys = set(features_df[features_df['Bait'] == bait]['Prey'])
@@ -156,11 +141,7 @@ def add_missing_preys(df, features_df, prey_col):
 
 
 def load_uniprot_to_gene(path=GAF_FILE):
-    """Accession -> gene symbol from the vendored GO annotation file.
 
-    Offline by design: the UniProt web service returned different results as
-    releases changed, so a rerun did not reproduce the published figures.
-    """
     mapping = {}
     with open(path) as fh:
         for line in fh:
@@ -173,12 +154,7 @@ def load_uniprot_to_gene(path=GAF_FILE):
 
 
 def make_to_gene(id_map):
-    """Map one identifier to a gene symbol.
 
-    Handles semicolon-separated protein groups (first member that maps wins)
-    and isoform suffixes. An unmapped value is returned unchanged rather than
-    becoming NaN, which is what left blank symbols in the deposited tables.
-    """
     def to_gene(value):
         for member in str(value).split(';'):
             accession = member.split('-')[0].strip()
@@ -189,13 +165,7 @@ def make_to_gene(id_map):
 
 
 def tie_averaged_labels(score, true):
-    """Labels in rank order, each block of tied scores replaced by its mean.
 
-    Pairs a method scores identically have no order between them, so every
-    position in a tied block counts as the block's hit rate -- the expected
-    value under a random order of the ties. Nothing then depends on the row
-    order of the table. Unscored (NaN) pairs rank last, as one tied block.
-    """
     score = np.asarray(score, dtype=float)
     score = np.where(np.isnan(score), -np.inf, score)
     order = np.argsort(-score, kind='stable')
@@ -241,12 +211,7 @@ def calculate_precision_recall_f1_topn(df, score_column, true_label_column,
 
 
 def _pr_auc_from_sorted(true_sorted, step_size=STEP_SIZE):
-    """AUCPR of the curve traced by an already-ranked list of labels.
 
-    Reproduces calculate_precision_recall_f1_topn followed by auc(): precision
-    at depth k is tp/k against the nominal depth, and recall is tp over the
-    positives present in the list being swept.
-    """
     n = len(true_sorted)
     if n == 0:
         return 0.0
@@ -260,20 +225,7 @@ def _pr_auc_from_sorted(true_sorted, step_size=STEP_SIZE):
 
 
 def paired_bootstrap_aucs(specs, depths, n_bootstrap=N_BOOTSTRAP, seed=0):
-    """Bootstrap every method on the SAME resampled pairs.
 
-    specs  : [(name, df, prey_col, score_col)] -- frames sharing one pair set
-    depths : {label: topn}, topn None meaning the whole ranked list
-
-    Returns {name: {label: array of n_bootstrap AUCs}}, replicate-aligned:
-    entry b of every array comes from one shared draw of pairs, so the
-    per-replicate difference between two methods is meaningful and a paired CI
-    can be taken from it.
-
-    Resampling unit: bait-prey PAIRS. Within one bait every pair shares the
-    same controls and feature scaling, so this is the optimistic bound on
-    uncertainty.
-    """
     keys = [list(zip(df['Bait'].astype(str), df[prey_col].astype(str)))
             for _n, df, prey_col, _sc in specs]
 
@@ -292,8 +244,7 @@ def paired_bootstrap_aucs(specs, depths, n_bootstrap=N_BOOTSTRAP, seed=0):
         d['_pair_key'] = k
         d = d.drop_duplicates('_pair_key').set_index('_pair_key').reindex(order)
         score = pd.to_numeric(d[score_col], errors='coerce').to_numpy(dtype=float)
-        # An unscored pair ranks last rather than dropping out, so every method
-        # is measured on an identical pair set.
+
         score = np.where(np.isnan(score), -np.inf, score)
         aligned[name] = (score, d['true_label'].to_numpy(dtype=float))
 
@@ -311,7 +262,6 @@ def paired_bootstrap_aucs(specs, depths, n_bootstrap=N_BOOTSTRAP, seed=0):
 
 
 def paired_difference_ci(boot, a, b, label, alpha=0.05):
-    """Percentile CI for AUC(a) - AUC(b), taken from the shared replicates."""
     d = boot[a][label] - boot[b][label]
     return {'mean_difference': float(d.mean()),
             'ci_low': float(np.percentile(d, 100 * alpha / 2)),
@@ -331,15 +281,13 @@ def is_any_gene_in_gold(prey_str, gold_set):
 # =============================================================================
 
 def load_new_methods(cfg, key):
-    """Every method's scored table, aligned on one pair set."""
     features_df = pd.read_csv(cfg['features'])
 
     # CompPASS, from cRomppass -- see comppass_run.R
     cp_path = cfg['comppass']
     comppass = pd.read_csv(cp_path)[['Bait', 'Prey', 'WD', 'Z', 'Entropy']]
 
-    # Matrices that identify proteins by accession are mapped to gene symbols,
-    # CompPASS included, since it is read straight off the same matrices.
+
     to_gene = make_to_gene(load_uniprot_to_gene(cfg['gaf_file'])) if cfg['gaf'] else None
     if cfg['gaf']:
         for label, frame, col in [('WHISPER', features_df, 'Prey'),
@@ -351,18 +299,10 @@ def load_new_methods(cfg, key):
             print(f'{label}: {int((frame[col].astype(str) != before).sum())}/'
                   f'{len(frame)} identifiers converted to gene symbols')
 
-    # --- SFINX (Titeca et al.), scored with the sfinx CRAN package ----------
-    # SFINX returns only the interactions it retains -- a few hundred out of
-    # tens of thousands -- so the full pair set is restored here with an
-    # unscored floor, the same convention add_missing_preys applies to preys
-    # SAINT never scored. sfinx_score is -log10(Scores), higher being more
-    # confident, so 0 sits below every retained pair.
     sx_path = cfg['sfinx']
     sfinx = pd.read_csv(sx_path)
     if not sfinx.empty:
-        # SFINX is read straight off the intensity matrix, so where that matrix
-        # uses accessions both columns need mapping: the bait back to its
-        # symbol, the prey through the same GAF map as every other method
+
         back = {v: k for k, v in cfg.get('self_gene', {}).items()}
         back.update({'P25789': 'PSMA4', 'P35998': 'PSMC2',
                      'ACTB;ACTG1': 'ACTB', 'NRAS;HRAS': 'NRAS',
@@ -371,8 +311,6 @@ def load_new_methods(cfg, key):
         if to_gene is not None:
             sfinx['Prey'] = sfinx['Prey'].astype(str).map(to_gene)
     pairs = features_df[['Bait', 'Prey']].drop_duplicates().copy()
-    # comppass_prepare.py drops the labelling enzyme, so those pairs are
-    # restored unscored and rank last: every method keeps WHISPER's pair set.
     comppass = pairs.merge(comppass, on=['Bait', 'Prey'], how='left')
     sfinx = pairs.merge(
         sfinx[['Bait', 'Prey', 'sfinx_score']] if not sfinx.empty
@@ -383,9 +321,6 @@ def load_new_methods(cfg, key):
     print(f'SFINX: {n_scored}/{len(sfinx)} pairs retained and scored; '
           f'the rest padded to the bottom of the ranking')
 
-    # --- PP-NSAF (Sardiu et al.), scored with ppnsaf_run.py ----------------
-    # Its contaminant step drops a quarter to a third of proteins outright,
-    # so those pairs carry no score and are floored like SFINX's.
     pp_path = cfg['ppnsaf']
     ppnsaf = pd.read_csv(pp_path)[['Bait', 'Prey', 'ppnsaf_score']]
     if to_gene is not None:
@@ -399,11 +334,6 @@ def load_new_methods(cfg, key):
     print(f'PP-NSAF: {n_pp}/{len(ppnsaf)} pairs surviving the contaminant '
           f'filter and scored; the rest padded to the bottom')
 
-    # --- MiST (Jager et al. 2012), scored with the Krogan lab's R package ---
-    # via mist_run.py at its default settings. Like SAINT it scores only pairs
-    # the prey was detected in, so the rest are padded below every scored pair.
-    # MiST scores reach exactly 0, so the pad is -1 rather than 0 to keep the
-    # unscored pairs strictly last. Datasets with no MiST run simply omit it.
     mist = None
     mi_path = cfg.get('mist')
     if mi_path and os.path.exists(mi_path):
@@ -418,11 +348,6 @@ def load_new_methods(cfg, key):
     else:
         print(f'MiST: no scores at {mi_path} -- omitted for this dataset')
 
-    # The bait's own protein stays in every method's table. It is scored like
-    # any other pair now, and both ground-truth generators list the bait as its
-    # own prey, so recovering it is a true positive rather than a false one at
-    # rank 1. Dropping it would measure something the ground truth no longer
-    # says.
 
     frames = {'WHISPER': (features_df, 'Prey', 'predicted_probability'),
               'CompPASS': (comppass, 'Prey', 'WD'),
@@ -434,12 +359,7 @@ def load_new_methods(cfg, key):
 
 
 def load_old_methods(cfg, features_df):
-    """The composite score, SAINTq, SAINTexpress and limma, pooled.
 
-    Same order of operations as plot_precision_overall_rank.py: pad each
-    method to WHISPER's pair set, map identifiers where the dataset stores
-    accessions, and min-max the composite score across the whole dataset.
-    """
     saintq = saintex = limma = None
     if cfg['saintq']:
         saintq = pd.read_csv(cfg['saintq'], sep='\t').rename(
@@ -466,18 +386,14 @@ def load_old_methods(cfg, features_df):
                   f'gene symbols ({len(frame) - changed} already symbols or '
                   f'unmapped)')
 
-    # Padded only now, once SAINT carries the same identifiers as features_df,
-    # which load_new_methods has already mapped. Padding first compared
-    # accessions with gene symbols, added every pair a second time at AvgP 0,
-    # and that padded copy was the one the alignment kept.
+
     if saintq is not None:
         saintq = add_missing_preys(saintq, features_df, 'PreyGene')
     if saintex is not None:
         saintex = add_missing_preys(saintex, features_df, 'PreyGene')
 
     if limma is not None:
-        # limma_analysis.R drops the labelling enzyme; those pairs are restored
-        # unscored and rank last, so every method keeps WHISPER's pair set.
+
         limma = (features_df[['Bait', 'Prey']].drop_duplicates()
                  .merge(limma, on=['Bait', 'Prey'], how='left'))
         limma['limma_score'] = limma['t']
@@ -538,8 +454,7 @@ def auc_bar(auc_df, out_pdf, ncol, anchor, title=''):
         plt.errorbar(xs, sub['AUC'], yerr=sub['Std'], fmt='none', c='black',
                      capsize=3)
     plt.ylabel('AUC Value', fontsize=26)
-    # Fixed 0-1 so the panels of different datasets line up when placed side
-    # by side; an autoscaled axis makes near-equal bars look different.
+
     plt.ylim(0, 1)
     plt.xlabel('', fontsize=26)
     if title:
@@ -565,8 +480,7 @@ def run_dataset(cfg, key=None):
     os.makedirs(outdir, exist_ok=True)
     print(f'\n{"=" * 72}\n{cfg["name"]}\n{"=" * 72}')
 
-    # CompPASS, SFINX and PP-NSAF, with WHISPER, exactly as the supplementary
-    # figure loads them -- identifiers mapped, bait rows kept.
+
     features_df, frames = load_new_methods(cfg, key)
     frames.update(load_old_methods(cfg, features_df))
     frames['WHISPER'] = (features_df, 'Prey', 'predicted_probability')
@@ -592,7 +506,6 @@ def run_dataset(cfg, key=None):
                 d, score_col, 'true_label')
             curves[m] = (r, p, f1)
 
-        # Individual features, from WHISPER's own table, for the second figure.
         whisper_df = specs[[s[0] for s in specs].index('WHISPER')][1]
         feature_names = [f for f in FEATURE_NAMES if f in whisper_df.columns]
         for feat in feature_names:
@@ -664,9 +577,7 @@ def run_dataset(cfg, key=None):
             f'{outdir}/precision_recall_source_data_{tag}.csv', index=False)
 
         # --- the method sets -----------------------------------------------
-        # main: the methods in scope (every method on DDA spc); all: every
-        # method. Each with and without the heuristic (composite) score, plus
-        # WHISPER against the heuristic score alone.
+
         main = (present if cfg.get('all_methods_in_main')
                 else [m for m in present if m in MAIN_METHODS])
         variants = {
@@ -679,7 +590,6 @@ def run_dataset(cfg, key=None):
         }
         for suffix, methods in variants.items():
             auc_df = auc_frame(methods)
-            # WHISPER against the heuristic score is a bar plot only.
             if suffix != 'whisper_vs_heuristic':
                 pr_plot(entries(methods),
                         f'{outdir}/overall_precision_vs_recall_{tag}_{suffix}.pdf',
@@ -721,8 +631,7 @@ def run_dataset(cfg, key=None):
                         index=False)
 
         # --- WHISPER against its own individual features only --------------
-        # The figure above, without the other methods: WHISPER as the
-        # reference bar, so it shows what the model adds over any one feature.
+
         auc_df_wf = pd.concat([auc_frame(['WHISPER']),
                                pd.DataFrame(feature_rows)], ignore_index=True)
         pr_plot(entries(['WHISPER']),

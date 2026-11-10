@@ -52,8 +52,7 @@ def _fit(df_real, n_pos, n_neg):
 
 
 def _as_saved(probs):
-    """Scores as a CSV round trip leaves them, so ties match the deposited
-    tables the main figures read."""
+
     buf = pd.DataFrame({'p': probs}).to_csv(index=False)
     return pd.read_csv(io.StringIO(buf))['p'].to_numpy()
 
@@ -77,7 +76,6 @@ def _barplot(table, value, std, ylabel, out_pdf):
 
 
 def posneg_auc(cfg):
-    """cfg: features (feature table), gts, outdir, gaf, gaf_file."""
     out_dir = cfg['outdir']
     df = pd.read_csv(cfg['features']).sort_values(['Bait', 'Prey']).reset_index(drop=True)
     runs = {(p, n): _as_saved(_fit(df, p, n)[2]) for p in N_POS_LIST for n in N_NEG_LIST}

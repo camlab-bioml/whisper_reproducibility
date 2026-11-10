@@ -19,7 +19,6 @@ FILE_TAG = {'go_large': 'go', 'bg_large': 'bg'}
 
 
 def weak_label_preys(df, initial_positives, initial_negatives=N_NEGATIVES):
-    """{bait: (positive preys, negative preys)} for the strong baits."""
     df = df.sort_values(['Bait', 'Prey']).reset_index(drop=True)
     eligible = df[~df['is_inert']]
     labels = {}

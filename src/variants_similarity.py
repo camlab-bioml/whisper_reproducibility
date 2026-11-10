@@ -20,9 +20,7 @@ matplotlib.rcParams['font.sans-serif'] = ['Arial']
 FDR_THRESHOLD = 0.01
 TOP_N = 500
 
-# method -> (score column, FDR column, prey column after loading). limma's score
-# is its two-sided adjusted p-value, as in the research script; the figure uses
-# only the Spearman correlation, which does not depend on the sign.
+
 METHOD_COLUMNS = {
     'whisper': ('predicted_probability', 'FDR', 'Prey'),
     'SAINTq': ('AvgP', 'BFDR', 'PreyGene'),
@@ -134,8 +132,7 @@ def _average_spearman_plot(mat, out_pdf, box=4.5, left=2.9, bottom=2.9, top=0.7,
 
 
 def run_method(method, variants, out_dir):
-    """variants: {variant name: score table path}, the first one setting the
-    bait order."""
+
     out = os.path.join(out_dir, f'{method}_Variants_Similarity')
     os.makedirs(f'{out}/per_bait_csv', exist_ok=True)
     os.makedirs(f'{out}/per_bait_heatmaps', exist_ok=True)

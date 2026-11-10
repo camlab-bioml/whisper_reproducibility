@@ -35,8 +35,7 @@ def compute_precision_and_tp(df, fdr_column, bins=FDR_BINS):
 
 
 def run_dataset(cfg):
-    """cfg: features, saintq, saintexpress, limma (paths or None), gts
-    [(source, file)], outdir, fdr_bins_map_ids, gaf_file."""
+
     outdir = cfg['outdir']
     os.makedirs(outdir, exist_ok=True)
     features_df = pd.read_csv(cfg['features'])
@@ -54,7 +53,6 @@ def run_dataset(cfg):
                            'adj.P.Val.one_sided')
 
     if cfg.get('fdr_bins_map_ids'):
-        # padded first, then mapped, as in the research blocks
         to_gene = make_to_gene(load_uniprot_to_gene(cfg['gaf_file']))
         features_df['Prey'] = features_df['Prey'].astype(str).map(to_gene)
         for table, col, _f in others.values():

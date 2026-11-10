@@ -11,8 +11,7 @@ import pandas as pd
 
 
 def is_any_gene_in_gold(prey_str, gold_set):
-    """A pair is a hit when any member of its protein group is in the
-    reference -- the definition the AUC figures use."""
+
     if pd.isna(prey_str):
         return 0
     return int(any(gene in gold_set for gene in str(prey_str).split(';')))
@@ -29,16 +28,15 @@ matplotlib.rcParams['font.sans-serif'] = ['Arial']
 
 OUT_DIR = None
 
-RUNS = {}          # model -> score table, set by run()
+RUNS = {}         
 RUN_ORDER = ['int only', 'spc only', 'int + spc']
 
-GROUND_TRUTHS = {}  # 'GO:CC' / 'BioGRID' -> reference, set by run()
+GROUND_TRUTHS = {}  
 
 DEPTHS = {'Total AUC': None, 'AUC@Top300': 300}
 STEP_SIZE = 10
 N_BOOTSTRAP = 100
 
-# Three slots of the project palette, distinct under the validated light mode.
 RUN_COLORS = {'int only': '#2a78d6', 'spc only': '#eb6834',
               'int + spc': '#1baf7a'}
 GRID_KW = dict(color='#d8d8d4', linewidth=0.6, zorder=0)
@@ -50,13 +48,7 @@ UNIT_STYLE = {
 
 
 def tie_averaged_labels(score, true):
-    """Labels in rank order, each block of tied scores replaced by its mean.
 
-    Pairs a method scores identically have no order between them, so every
-    position in a tied block counts as the block's hit rate -- the expected
-    value under a random order of the ties. Nothing then depends on the row
-    order of the table. Unscored (NaN) pairs rank last, as one tied block.
-    """
     score = np.asarray(score, dtype=float)
     score = np.where(np.isnan(score), -np.inf, score)
     order = np.argsort(-score, kind='stable')
@@ -68,7 +60,6 @@ def tie_averaged_labels(score, true):
 
 
 def pr_auc_from_sorted(true_sorted, step_size=STEP_SIZE):
-    """AUCPR of an already-ranked label vector, as elsewhere in this project."""
     n = len(true_sorted)
     if n == 0:
         return 0.0
@@ -82,7 +73,6 @@ def pr_auc_from_sorted(true_sorted, step_size=STEP_SIZE):
 
 
 def load_aligned():
-    """The three scored tables, restricted to the pairs all of them contain."""
     frames = {}
     for name, path in RUNS.items():
         if not os.path.exists(path):
@@ -108,7 +98,6 @@ def load_aligned():
 
 
 def bootstrap(aligned, truth, uniq, unit, n_bootstrap=N_BOOTSTRAP, seed=0):
-    """Every model on the same resampled draw, so differences are paired."""
     rng = np.random.default_rng(seed)
     scores = {n: d['predicted_probability'].to_numpy(dtype=float)
               for n, d in aligned.items()}
@@ -135,7 +124,6 @@ def bootstrap(aligned, truth, uniq, unit, n_bootstrap=N_BOOTSTRAP, seed=0):
 
 
 def plot(point, diff, out_pdf):
-    """AUC per model, and the paired differences against the intensity model."""
     fig, axes = plt.subplots(2, len(DEPTHS),
                              figsize=(5.2 * len(DEPTHS), 7.4), squeeze=False)
 
@@ -157,7 +145,6 @@ def plot(point, diff, out_pdf):
         ax.set_title(depth, fontsize=11.5, loc='left')
         ax.set_ylim(0, max(0.2, float(point['AUC'].max()) * 1.2))
 
-    # Differences against the deployed intensity model, both resampling units.
     refs = [r for r in RUN_ORDER if r != 'int only']
     ypos = {f'{r} — {g}': k for k, (r, g) in enumerate(
         [(r, g) for r in refs for g in gts][::-1])}
@@ -222,8 +209,7 @@ def _evaluate():
     point_rows, diff_rows = [], []
     for gt_name, gt_file in GROUND_TRUTHS.items():
         g = pd.read_csv(gt_file)
-        # Labelled as the main figures label: the reference restricted to the
-        # preys identified, a protein group a hit when any member is in it.
+  
         g = g[g['Prey'].isin({k[1] for k in uniq})]
         gold = {b: set(g[g['Bait'] == b]['Prey']) for b in {k[0] for k in uniq}}
         truth = np.array([is_any_gene_in_gold(k[1], gold.get(k[0], set()))
@@ -292,7 +278,6 @@ SPC_SOURCE = ['log_fold_change', 'snr', 'mean_diff', 'replicate_fold_change_sd',
 
 def run(int_features_csv, spc_features_csv, int_scores, spc_scores, references, out_dir,
         initial_positives=15):
-    """references: {'GO:CC': path, 'BioGRID': path}."""
     global OUT_DIR
     from src.feature_engineering import FEATURE_COLUMNS
     from src import train_and_fdr as tf

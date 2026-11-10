@@ -96,7 +96,6 @@ def sweep(features_csv, initial_positives, out_csv, initial_negatives=200):
 
 
 def select(internal_csvs, out_csv):
-    """internal_csvs: {dataset name: hp_internal.csv}."""
     rows = []
     for ds, path in internal_csvs.items():
         g = pd.read_csv(path).set_index('config')
@@ -115,13 +114,11 @@ def select(internal_csvs, out_csv):
 
 
 def rf_params_for(label):
-    """The RandomForestClassifier arguments of a configuration label."""
     cfg = CONFIG_BY_LABEL[label]
     return {k: cfg[k] for k in ('max_features', 'min_samples_leaf', 'class_weight', 'n_estimators')}
 
 
 def compare(datasets, config_table, out_dir):
-    """datasets: [(name, vanilla benchmark dir, tuned benchmark dir)]."""
     rows = []
     for name, dv, dt in datasets:
         for gt in GROUND_TRUTHS:

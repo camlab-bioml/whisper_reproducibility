@@ -12,7 +12,7 @@ from src.benchmark import (METHOD_COLORS, is_any_gene_in_gold, load_new_methods,
 
 OUT_SUBDIR = 'gocc_sensitivity'
 CAPS = [100, 250, 500, 1000, 5000, None]
-IEA_SETTINGS = [True, False]          # True = included, as deployed
+IEA_SETTINGS = [True, False]          
 EXCLUDE_TERMS = {
     'GO:0005575',  # cellular component
     'GO:0005623',  # cell
@@ -42,7 +42,6 @@ def config_label(cap, iea):
 
 
 def load_gaf(path):
-    """GO:CC annotations, the six broad terms already dropped."""
     df = pd.read_csv(path, sep='\t', comment='!', names=GAF_COLS, dtype=str)
     df = df[(df['Aspect'] == 'C') & (~df['GO_ID'].isin(EXCLUDE_TERMS))]
     return df[['DB_Object_Symbol', 'GO_ID', 'Evidence_Code', 'Qualifier']].dropna(
@@ -50,11 +49,7 @@ def load_gaf(path):
 
 
 def gaf_members(gaf, dag):
-    """term -> member gene symbols from one GAF, propagated to ancestors.
 
-    Stands in for g:Profiler on the older release. Every evidence code is
-    kept, IEA included; NOT annotations are dropped.
-    """
     gaf = gaf[~gaf['Qualifier'].fillna('').str.contains('NOT')]
     members = {}
     for term, syms in gaf.groupby('GO_ID')['DB_Object_Symbol']:
@@ -66,12 +61,7 @@ def gaf_members(gaf, dag):
 
 
 def bait_terms(gaf, dag, bait, include_iea):
-    """A bait's GO:CC terms, expanded to ancestors.
 
-    This is where the IEA axis applies: with include_iea False the bait's
-    electronically inferred annotations are dropped before expansion, so the
-    ancestors they would have contributed are dropped with them.
-    """
     rows = gaf[gaf['DB_Object_Symbol'] == bait]
     if not include_iea:
         rows = rows[rows['Evidence_Code'] != 'IEA']
@@ -85,13 +75,7 @@ def bait_terms(gaf, dag, bait, include_iea):
 
 
 def fetch_members(terms, cache, gp):
-    """term -> member gene symbols, from g:Profiler, cached to disk.
 
-    Members do not depend on the cap, so each term is fetched once and every
-    cap level is then computed offline. A failed lookup is recorded rather
-    than silently cached as an empty set, which would be indistinguishable
-    from a term that genuinely has no members.
-    """
     missing = [t for t in sorted(terms) if t not in cache]
     if not missing:
         return []
@@ -112,7 +96,6 @@ def fetch_members(terms, cache, gp):
 
 
 def gold_set(terms, cache, bait, cap):
-    """Union of members over terms passing the size rule, as deployed."""
     preys, kept = set(), 0
     for term in terms:
         members = set(cache.get(term, []))
@@ -124,14 +107,7 @@ def gold_set(terms, cache, bait, cap):
 
 
 def summary_plot(auc, out_pdf, dataset_name, deployed_cap):
-    """One figure per dataset, every reference configuration in one row.
 
-    Four panels: Total AUC and AUC@Top300, each with IEA included and excluded;
-    within a panel the x-axis is the term-size cap. Absolute AUC is not
-    comparable between caps -- each changes the base rate for every method at
-    once -- so the panels are read for the ordering within each group of bars.
-    The deployed setting is cap `deployed_cap` with IEA included.
-    """
     caps = [cap_label(c) for c in CAPS]
     methods = [m for m in METHODS if m in set(auc['Method'])]
     panels = [(depth, iea) for depth in DEPTH_LABELS for iea in IEA_SETTINGS]
@@ -174,7 +150,6 @@ def summary_plot(auc, out_pdf, dataset_name, deployed_cap):
 
 
 def label_specs(frames, gold):
-    """Each method's table labelled against one reference."""
     specs = []
     for m in METHODS:
         if m not in frames:
@@ -188,13 +163,7 @@ def label_specs(frames, gold):
 
 
 def run_dataset(cfg, dag, gaf, cache, gp=None, suffix=''):
-    """All twelve references for one dataset.
 
-    With gp, members come from g:Profiler through cache (the deployed
-    release). Without it, cache is already a complete term -> members map,
-    as gaf_members builds for the older release, and every output file
-    carries `suffix`.
-    """
     outdir = os.path.join(cfg['outdir'], OUT_SUBDIR)
     os.makedirs(outdir, exist_ok=True)
     print(f'\n{"=" * 72}\n{cfg["name"]}\n{"=" * 72}')
@@ -289,11 +258,7 @@ def run_dataset(cfg, dag, gaf, cache, gp=None, suffix=''):
 
 
 def one_row_plot(auc, out_pdf, dataset_name):
-    """Every reference in one row: Total AUC and AUC@Top300 side by side.
 
-    Within a panel the x-axis runs through four blocks of term-size caps --
-    each release with IEA included and excluded -- separated by dashed lines.
-    """
     caps = [cap_label(c) for c in CAPS]
     blocks = [(rel, iea) for rel in RELEASES for iea in IEA_SETTINGS]
     order = [f'{rel}|{iea}|{c}' for rel, iea in blocks for c in caps]
@@ -345,8 +310,7 @@ def one_row_plot(auc, out_pdf, dataset_name):
 
 
 def run(cfg, gaf_file, obo_file, cache_file, old_release_dir):
-    """Both releases for one dataset, then the one-row figure.
-    cfg: the src.benchmark dictionary plus deployed_cap and bait_self_prey."""
+
     from goatools.obo_parser import GODag
     with open(cache_file) as fh:
         cache = json.load(fh)

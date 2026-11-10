@@ -18,7 +18,6 @@ OUT_SUBDIR = 'per_bait'
 
 
 def _safe(name):
-    """Bait label usable in a filename."""
     return re.sub(r'[^A-Za-z0-9._-]+', '_', str(name))
 
 
@@ -61,8 +60,7 @@ def auc_bar(auc_df, out_pdf, ncol, anchor, title=''):
         plt.errorbar(xs, sub['AUC'], yerr=sub['Std'], fmt='none', c='black',
                      capsize=3)
     plt.ylabel('AUC Value', fontsize=26)
-    # Fixed 0-1 so the panels of different datasets line up when placed side
-    # by side; an autoscaled axis makes near-equal bars look different.
+
     plt.ylim(0, 1)
     plt.xlabel('', fontsize=26)
     if title:
@@ -77,13 +75,7 @@ def auc_bar(auc_df, out_pdf, ncol, anchor, title=''):
 
 
 def auc_bar_all_baits(summary, out_pdf, title, method_set=None):
-    """Every bait's main-methods bar plot side by side, one panel per bait.
 
-    Each panel is the per-bait bar plot restricted to WHISPER, the composite
-    score, SAINTq, SAINTexpress and limma -- whichever the dataset has -- with
-    the same bars, error bars (SD over the pair bootstrap) and fixed 0-1 axis,
-    so baits can be read against each other directly.
-    """
     baits = list(dict.fromkeys(summary['Bait']))
     methods = [m for m in (method_set or OLD_METHODS)
                if m in set(summary['Method'])]
@@ -120,7 +112,6 @@ def auc_bar_all_baits(summary, out_pdf, title, method_set=None):
 
 
 def run_dataset(cfg):
-    """cfg: the dictionary src.benchmark.run_dataset takes."""
     outdir = os.path.join(cfg['outdir'], OUT_SUBDIR)
     os.makedirs(outdir, exist_ok=True)
     print(f'\n{"=" * 72}\n{cfg["name"]}\n{"=" * 72}')
@@ -292,7 +283,6 @@ def run_dataset(cfg):
 
 
 def draw_all_baits(summary, outdir, name, gt_source):
-    """The all-baits figure twice: the main methods, and every method."""
     for suffix, method_set in (('main_methods', OLD_METHODS),
                                ('all_methods', ALL_METHODS)):
         auc_bar_all_baits(

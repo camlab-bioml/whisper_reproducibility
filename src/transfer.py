@@ -66,7 +66,6 @@ def _score_target(cfg, scaler, model, out_root, summary):
 
 
 def run(source_features_csv, source_positives, targets, out_root):
-    """targets: [benchmark cfg] in display order."""
     os.makedirs(out_root, exist_ok=True)
     _df, model, scaler, _y = fit(pd.read_csv(source_features_csv), source_positives, 200)
     summary = []
