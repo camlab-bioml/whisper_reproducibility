@@ -73,7 +73,6 @@ def out(cfg, name):
 
 
 def method_cfg(cfg, outdir=None, scores=None):
-    """The dictionary the ported benchmark modules take."""
     m = cfg.get('methods', {})
     return {
         'name': cfg['dataset'],

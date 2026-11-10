@@ -51,8 +51,6 @@ The `steps` entry of each config lists the analyses run for that dataset. Single
 python script.py --config config/dataset1.yaml --step benchmark
 ```
 
-The slowest steps are the hyperparameter sweep (54 configurations), the null refits of Sup. Fig. 13 and the fragment level (an ~0.9 GB feature table, ~1 GB of scores). GO enrichment (Fig. 6a-c) queries g:Profiler and needs internet; Sup. Fig. 8 downloads the GO release of 2021-01-01 on first use.
-
 ---
 
 ## Workflow
