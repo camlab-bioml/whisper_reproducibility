@@ -1,0 +1,53 @@
+# Dataset 5: AP-MS, DIA (EIF4A2, MEPCE)
+
+dataset: Dataset 5 (AP-MS DIA)
+level: protein
+
+# Inputs
+input_file: data/dataset5/intensity.tsv
+baits: [EIF4A2, MEPCE]    # null: every sample that is not a control
+controls: [GFP]
+control_match: substring    # substring or exact
+labelling_enzyme: null
+bait_self_protein: {}
+drop_unnamed: false
+
+# Training
+initial_positives: 15
+initial_negatives: 200
+n_decoy_replicates: 30
+
+# Methods compared (scored outside this workflow; see README)
+methods:
+  saintq: data/dataset5/saintq.tsv
+  saintexpress: data/dataset5/saintexpress.txt
+  limma: data/dataset5/limma.tsv
+  comppass: data/dataset5/comppass.csv
+  sfinx: data/dataset5/sfinx.csv
+  ppnsaf: data/dataset5/ppnsaf.csv
+  mist: data/dataset5/mist.csv
+
+# References (frozen; the copies used in the paper)
+references:
+  go_large: data/dataset5/gocc_reference.csv
+  bg_large: data/dataset5/biogrid_reference.csv
+
+# Identifier handling
+map_identifiers: false    # UniProt -> gene symbol through src/goa_human.gaf
+fdr_bins_map_ids: false
+self_gene: {}
+all_methods_in_main: false
+
+# Only for regenerating the references (optional rules)
+reference_generation:
+  baits: [MEPCE, EIF4A2]
+  term_size_threshold: 250
+  bait_self_prey: {}
+
+# GO aspect references (Sup. Fig. 7; frozen)
+go_aspects_dir: data/dataset5/go_aspects
+
+# Outputs
+table_number: 9    # Supplementary Table
+results_dir: results/dataset5
+steps: [benchmark, overlap, fdr_bins, label_quality, auc_range, per_bait, saint_intersection, go_aspects, gocc_sensitivity, fdr_bounds_methods, fdr_bounds_nulls, cross_validation, tuning_sweep, tuned_model, posneg_auc, label_diagnostics, supplementary_table]

@@ -1,0 +1,56 @@
+dataset,ground_truth,Method,Depth,topn,AUC,AUC_std,precision
+APEX SG stress,go_large,WHISPER,Top 50,50,0.6240995224278955,0.05291885384144916,
+APEX SG stress,go_large,WHISPER,Top 100,100,0.666750672697248,0.05093450351981196,
+APEX SG stress,go_large,WHISPER,Top 200,200,0.6273344699802927,0.045922037674401305,
+APEX SG stress,go_large,WHISPER,Top 300,300,0.5934232449955674,0.04085602733609351,
+APEX SG stress,go_large,WHISPER,Total AUC,16653,0.2639062508909302,0.006357649724798614,
+APEX SG stress,go_large,WHISPER,precision@10,10,,,0.8
+APEX SG stress,go_large,WHISPER,precision@25,25,,,0.76
+APEX SG stress,go_large,WHISPER,precision@50,50,,,0.8
+APEX SG stress,go_large,WHISPER,precision@100,100,,,0.62
+APEX SG stress,go_large,WHISPER,precision@200,200,,,0.505
+APEX SG stress,go_large,WHISPER,precision@300,300,,,0.44333333333333336
+APEX SG stress,go_large,Heuristic score,Top 50,50,0.43798782587290525,0.06989079953151821,
+APEX SG stress,go_large,Heuristic score,Top 100,100,0.4752478600241065,0.05858933954195597,
+APEX SG stress,go_large,Heuristic score,Top 200,200,0.4628541296871901,0.04876501496890667,
+APEX SG stress,go_large,Heuristic score,Top 300,300,0.44651553921220855,0.04462107119136513,
+APEX SG stress,go_large,Heuristic score,Total AUC,16653,0.25688722603517294,0.005568629814358874,
+APEX SG stress,go_large,Heuristic score,precision@10,10,,,0.7
+APEX SG stress,go_large,Heuristic score,precision@25,25,,,0.6
+APEX SG stress,go_large,Heuristic score,precision@50,50,,,0.54
+APEX SG stress,go_large,Heuristic score,precision@100,100,,,0.5
+APEX SG stress,go_large,Heuristic score,precision@200,200,,,0.415
+APEX SG stress,go_large,Heuristic score,precision@300,300,,,0.3466666666666667
+APEX SG stress,go_large,SAINTq,Top 50,50,0.16225964626217457,0.023868443691143527,
+APEX SG stress,go_large,SAINTq,Top 100,100,0.18254210204494636,0.026851999152536447,
+APEX SG stress,go_large,SAINTq,Top 200,200,0.19513074011519133,0.02798227971266823,
+APEX SG stress,go_large,SAINTq,Top 300,300,0.21904763334263314,0.026616033475675732,
+APEX SG stress,go_large,SAINTq,Total AUC,16653,0.2753966335304449,0.005862621002165396,
+APEX SG stress,go_large,SAINTq,precision@10,10,,,0.2046783625730994
+APEX SG stress,go_large,SAINTq,precision@25,25,,,0.20467836257309938
+APEX SG stress,go_large,SAINTq,precision@50,50,,,0.20467836257309943
+APEX SG stress,go_large,SAINTq,precision@100,100,,,0.20467836257309938
+APEX SG stress,go_large,SAINTq,precision@200,200,,,0.205
+APEX SG stress,go_large,SAINTq,precision@300,300,,,0.2733333333333333
+APEX SG stress,go_large,SAINTexpress,Top 50,50,0.18196024740287037,0.0027394996184549832,
+APEX SG stress,go_large,SAINTexpress,Top 100,100,0.20470527832822907,0.003081937070761844,
+APEX SG stress,go_large,SAINTexpress,Top 200,200,0.2160777937909085,0.0032531557969152653,
+APEX SG stress,go_large,SAINTexpress,Top 300,300,0.21986863227846826,0.0033102287056330955,
+APEX SG stress,go_large,SAINTexpress,Total AUC,16653,0.22731371846252446,0.003422318082581425,
+APEX SG stress,go_large,SAINTexpress,precision@10,10,,,0.2278268179907524
+APEX SG stress,go_large,SAINTexpress,precision@25,25,,,0.2278268179907524
+APEX SG stress,go_large,SAINTexpress,precision@50,50,,,0.2278268179907524
+APEX SG stress,go_large,SAINTexpress,precision@100,100,,,0.22782681799075238
+APEX SG stress,go_large,SAINTexpress,precision@200,200,,,0.22782681799075236
+APEX SG stress,go_large,SAINTexpress,precision@300,300,,,0.22782681799075238
+APEX SG stress,go_large,limma,Top 50,50,0.14426463892180805,0.05208552556363927,
+APEX SG stress,go_large,limma,Top 100,100,0.16089245460502738,0.047722718221271256,
+APEX SG stress,go_large,limma,Top 200,200,0.19110189357288884,0.030352495114235153,
+APEX SG stress,go_large,limma,Top 300,300,0.20639531422226112,0.026044780979129507,
+APEX SG stress,go_large,limma,Total AUC,16653,0.23805887469574022,0.004708360109115013,
+APEX SG stress,go_large,limma,precision@10,10,,,0.4
+APEX SG stress,go_large,limma,precision@25,25,,,0.2
+APEX SG stress,go_large,limma,precision@50,50,,,0.24
+APEX SG stress,go_large,limma,precision@100,100,,,0.16
+APEX SG stress,go_large,limma,precision@200,200,,,0.24
+APEX SG stress,go_large,limma,precision@300,300,,,0.24

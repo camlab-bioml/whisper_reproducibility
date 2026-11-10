@@ -1,32 +1,28 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
-    name="puppi_reproducibility",
-    version="0.1",
+    name="whisper_reproducibility",
+    version="0.2",
     author="Vesal Kasmaeifar",
-    author_email="vesal.kasmaeifar@mail.utoronto.com",
-    description="PU Learning pipeline for proximity proteomics and AP-MS PPI scoring",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
-    include_package_data=True,
+    description="Workflow reproducing the figures and tables of the WHISPER manuscript",
+    packages=["src"],
+    py_modules=["script"],
+    package_data={"src": ["go-basic.obo", "goa_human.gaf"]},
     install_requires=[
         "pandas",
         "numpy",
+        "scipy",
+        "scikit-learn",
         "matplotlib",
         "seaborn",
-        "scikit-learn",
+        "pyyaml",
+        "openpyxl",
+        "upsetplot",
+        "gprofiler-official",
         "goatools",
         "requests",
-        "pyyaml",
+        "snakemake",
     ],
-    entry_points={
-        "console_scripts": [
-            "puppi=script:main"
-        ]
-    },
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "Operating System :: OS Independent",
-    ],
-    python_requires='>=3.9',
+    entry_points={"console_scripts": ["whisper-repro=script:main"]},
+    python_requires=">=3.9",
 )

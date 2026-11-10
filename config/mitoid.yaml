@@ -1,0 +1,50 @@
+# MitoID: BioID of 17 GTP-locked GTPases on the mitochondrial outer membrane (Sup. Fig. 14)
+
+dataset: MitoID
+level: protein
+
+# Inputs
+input_file: data/mitoid/intensity.tsv
+baits: [CDC42, RAC1, NRAS, RAB2A, RAB5A, RAB6A, RAB7A, RAB8A, RAB9A, RAB10, RAB11A, RAB18, RAB30, RAB33B, RALB, RHEB, RHOA]    # null: every sample that is not a control
+controls: [CDC42i, RAC1i, NRASi, RAB2Ai, RAB5Ai, RAB6Ai, RAB7Ai, RAB8Ai, RAB9Ai, RAB10i, RAB11Ai, RAB18i, RAB30i, RAB33Bi, RALBi, RHEBi, RHOAi, BirA]
+control_match: exact    # substring or exact
+labelling_enzyme: null
+bait_self_protein: {}
+drop_unnamed: false
+
+# Training
+initial_positives: 5
+initial_negatives: 200
+n_decoy_replicates: 30
+
+# Methods compared (scored outside this workflow; see README)
+methods:
+  saintq: data/mitoid/saintq.tsv
+  saintexpress: data/mitoid/saintexpress.txt
+  limma: data/mitoid/limma.tsv
+  comppass: data/mitoid/comppass.csv
+  sfinx: data/mitoid/sfinx.csv
+  ppnsaf: data/mitoid/ppnsaf.csv
+  mist: data/mitoid/mist.csv
+
+# References (frozen; the copies used in the paper)
+references:
+  go_large: data/mitoid/gocc_reference.csv
+  bg_large: data/mitoid/biogrid_reference.csv
+
+# Identifier handling
+map_identifiers: false    # UniProt -> gene symbol through src/goa_human.gaf
+fdr_bins_map_ids: true
+self_gene: {}
+all_methods_in_main: false
+
+# Only for regenerating the references (optional rules)
+reference_generation:
+  baits: [CDC42, RAC1, NRAS, RAB2A, RAB5A, RAB6A, RAB7A, RAB8A, RAB9A, RAB10, RAB11A, RAB18, RAB30, RAB33B, RALB, RHEB, RHOA]
+  term_size_threshold: 1000
+  bait_self_prey: {RAC1: [RAC1, 'RAC1;RAC3;RAC2'], NRAS: [NRAS, 'NRAS;HRAS'], RHOA: [RHOA, 'RHOA;RHOC']}
+
+# Outputs
+table_number: 10    # Supplementary Table
+results_dir: results/mitoid
+steps: [benchmark, overlap, fdr_bins, supplementary_table]

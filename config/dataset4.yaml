@@ -1,30 +1,53 @@
-# Input raw data
-input_file: data/dataset3/input_intensity_dataset.tsv
+# Dataset 4: APEX, DDA, stress granules (FMR1, FXR1, G3BP1); UniProt accessions
 
-# Controls used for negative examples in feature engineering
-controls: [GFP]
+dataset: Dataset 4 (APEX DDA)
+level: protein
 
-# Bait proteins to analyze
-baits: [EIF4A2, MEPCE]
+# Inputs
+input_file: data/dataset4/intensity.tsv
+baits: [FMR1, FXR1, G3BP1]    # null: every sample that is not a control
+controls: [NES, NOBP]
+control_match: substring    # substring or exact
+labelling_enzyme: APEX2
+bait_self_protein: {}
+drop_unnamed: true
 
-# Output paths
-feature_output: results/dataset3/features.csv
-fdr_output: results/dataset3/final_predictions.csv
-gocc_output: results/dataset3/gocc_ground_truth.csv
-biogrid_output: results/dataset3/biogrid_ground_truth.csv
-
-# Initial labeling for PU learning
+# Training
 initial_positives: 10
 initial_negatives: 200
+n_decoy_replicates: 30
 
-# GO annotation files
-gaf_file: src/goa_human.gaf
-obo_file: src/go-basic.obo
+# Methods compared (scored outside this workflow; see README)
+methods:
+  saintq: data/dataset4/saintq.tsv
+  saintexpress: data/dataset4/saintexpress.txt
+  limma: data/dataset4/limma.tsv
+  comppass: data/dataset4/comppass.csv
+  sfinx: data/dataset4/sfinx.csv
+  ppnsaf: data/dataset4/ppnsaf.csv
+  mist: data/dataset4/mist.csv
 
-# Plotting inputs
-plot_gt_file: results/dataset3/biogrid_ground_truth.csv  # or biogrid_ground_truth.csv
-plot_gt_source: bg_large  # or "go_small" depending on your gold standard type
+# References (frozen; the copies used in the paper)
+references:
+  go_large: data/dataset4/gocc_reference.csv
+  bg_large: data/dataset4/biogrid_reference.csv
 
-# SAINT score outputs
-saintq_path: data/dataset3/SAINTexpress_output.txt
-saintexpress_path: data/dataset3/SAINTq_output.tsv
+# Identifier handling
+map_identifiers: true    # UniProt -> gene symbol through src/goa_human.gaf
+fdr_bins_map_ids: true
+self_gene: {}
+all_methods_in_main: false
+
+# Only for regenerating the references (optional rules)
+reference_generation:
+  baits: [FMR1, FXR1, G3BP1]
+  term_size_threshold: 1000
+  bait_self_prey: {}
+
+# GO aspect references (Sup. Fig. 7; frozen)
+go_aspects_dir: data/dataset4/go_aspects
+
+# Outputs
+table_number: 8    # Supplementary Table
+results_dir: results/dataset4
+steps: [benchmark, overlap, fdr_bins, label_quality, auc_range, per_bait, saint_intersection, go_aspects, gocc_sensitivity, fdr_bounds_methods, fdr_bounds_nulls, cross_validation, tuning_sweep, tuned_model, posneg_auc, label_diagnostics, supplementary_table]

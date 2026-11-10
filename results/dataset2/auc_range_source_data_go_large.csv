@@ -1,0 +1,56 @@
+dataset,ground_truth,Method,Depth,topn,AUC,AUC_std,precision
+Benchmarking BioID 2 DDA int,go_large,WHISPER,Top 50,50,0.5716569805256476,0.05570395348747026,
+Benchmarking BioID 2 DDA int,go_large,WHISPER,Top 100,100,0.6075261049950638,0.04841502599830826,
+Benchmarking BioID 2 DDA int,go_large,WHISPER,Top 200,200,0.6265373521963032,0.037555517906611,
+Benchmarking BioID 2 DDA int,go_large,WHISPER,Top 300,300,0.6217740263924174,0.032025679437848634,
+Benchmarking BioID 2 DDA int,go_large,WHISPER,Total AUC,16104,0.38609483639318704,0.00847636046887818,
+Benchmarking BioID 2 DDA int,go_large,WHISPER,precision@10,10,,,0.9
+Benchmarking BioID 2 DDA int,go_large,WHISPER,precision@25,25,,,0.72
+Benchmarking BioID 2 DDA int,go_large,WHISPER,precision@50,50,,,0.76
+Benchmarking BioID 2 DDA int,go_large,WHISPER,precision@100,100,,,0.63
+Benchmarking BioID 2 DDA int,go_large,WHISPER,precision@200,200,,,0.62
+Benchmarking BioID 2 DDA int,go_large,WHISPER,precision@300,300,,,0.6166666666666667
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,Top 50,50,0.5026583441327637,0.05768943822369836,
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,Top 100,100,0.5464137879339509,0.04886497814306769,
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,Top 200,200,0.5761840665355923,0.03903263417185745,
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,Top 300,300,0.5875807171475893,0.033841253883328266,
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,Total AUC,16104,0.35776012873273366,0.008445349071290728,
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,precision@10,10,,,0.6
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,precision@25,25,,,0.68
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,precision@50,50,,,0.6
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,precision@100,100,,,0.6
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,precision@200,200,,,0.625
+Benchmarking BioID 2 DDA int,go_large,Heuristic score,precision@300,300,,,0.6066666666666667
+Benchmarking BioID 2 DDA int,go_large,SAINTq,Top 50,50,0.38516092654030837,0.012668695813782537,
+Benchmarking BioID 2 DDA int,go_large,SAINTq,Top 100,100,0.433306042357847,0.014252282790505371,
+Benchmarking BioID 2 DDA int,go_large,SAINTq,Top 200,200,0.4573786002666162,0.015044076278866803,
+Benchmarking BioID 2 DDA int,go_large,SAINTq,Top 300,300,0.46540278623620585,0.015308007441653967,
+Benchmarking BioID 2 DDA int,go_large,SAINTq,Total AUC,16104,0.3578894406674476,0.008279802152504828,
+Benchmarking BioID 2 DDA int,go_large,SAINTq,precision@10,10,,,0.4845650140318053
+Benchmarking BioID 2 DDA int,go_large,SAINTq,precision@25,25,,,0.4845650140318054
+Benchmarking BioID 2 DDA int,go_large,SAINTq,precision@50,50,,,0.4845650140318054
+Benchmarking BioID 2 DDA int,go_large,SAINTq,precision@100,100,,,0.4845650140318054
+Benchmarking BioID 2 DDA int,go_large,SAINTq,precision@200,200,,,0.48456501403180524
+Benchmarking BioID 2 DDA int,go_large,SAINTq,precision@300,300,,,0.4845650140318054
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,Top 50,50,0.5313018307442074,0.04980695453317156,
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,Top 100,100,0.5712458521023004,0.050658807011161766,
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,Top 200,200,0.5851857798051026,0.04287569952190673,
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,Top 300,300,0.5827882933634418,0.03735776835743343,
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,Total AUC,16104,0.32293359745631073,0.009214172125814268,
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,precision@10,10,,,0.6721311475409835
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,precision@25,25,,,0.6721311475409836
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,precision@50,50,,,0.6721311475409835
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,precision@100,100,,,0.598
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,precision@200,200,,,0.575
+Benchmarking BioID 2 DDA int,go_large,SAINTexpress,precision@300,300,,,0.5866666666666667
+Benchmarking BioID 2 DDA int,go_large,limma,Top 50,50,0.3936627598713581,0.06719288535307023,
+Benchmarking BioID 2 DDA int,go_large,limma,Top 100,100,0.44381226465342694,0.055657831644110395,
+Benchmarking BioID 2 DDA int,go_large,limma,Top 200,200,0.45818322226250857,0.044722154900297684,
+Benchmarking BioID 2 DDA int,go_large,limma,Top 300,300,0.4592755029603599,0.037789359921365145,
+Benchmarking BioID 2 DDA int,go_large,limma,Total AUC,16104,0.36602383490930473,0.007963277379105538,
+Benchmarking BioID 2 DDA int,go_large,limma,precision@10,10,,,0.5
+Benchmarking BioID 2 DDA int,go_large,limma,precision@25,25,,,0.56
+Benchmarking BioID 2 DDA int,go_large,limma,precision@50,50,,,0.5
+Benchmarking BioID 2 DDA int,go_large,limma,precision@100,100,,,0.49
+Benchmarking BioID 2 DDA int,go_large,limma,precision@200,200,,,0.47
+Benchmarking BioID 2 DDA int,go_large,limma,precision@300,300,,,0.4666666666666667

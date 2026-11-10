@@ -1,0 +1,56 @@
+dataset,ground_truth,Method,Depth,topn,AUC,AUC_std,precision
+Proteasome BioID DIA,bg_large,WHISPER,Top 50,50,0.5368312281125148,0.07459555398558511,
+Proteasome BioID DIA,bg_large,WHISPER,Top 100,100,0.5141762498253322,0.0743754556726842,
+Proteasome BioID DIA,bg_large,WHISPER,Top 200,200,0.4517875346489008,0.06414057181194485,
+Proteasome BioID DIA,bg_large,WHISPER,Top 300,300,0.4175494309057703,0.0593939233383575,
+Proteasome BioID DIA,bg_large,WHISPER,Total AUC,9936,0.13175771207514742,0.014550036406697433,
+Proteasome BioID DIA,bg_large,WHISPER,precision@10,10,,,0.8333333333333334
+Proteasome BioID DIA,bg_large,WHISPER,precision@25,25,,,0.8266666666666667
+Proteasome BioID DIA,bg_large,WHISPER,precision@50,50,,,0.58
+Proteasome BioID DIA,bg_large,WHISPER,precision@100,100,,,0.39
+Proteasome BioID DIA,bg_large,WHISPER,precision@200,200,,,0.29
+Proteasome BioID DIA,bg_large,WHISPER,precision@300,300,,,0.23666666666666666
+Proteasome BioID DIA,bg_large,Heuristic score,Top 50,50,0.40144282930548003,0.07462357385719653,
+Proteasome BioID DIA,bg_large,Heuristic score,Top 100,100,0.4100183150234576,0.06748013567349785,
+Proteasome BioID DIA,bg_large,Heuristic score,Top 200,200,0.38483582274140005,0.06206664858941862,
+Proteasome BioID DIA,bg_large,Heuristic score,Top 300,300,0.34809998238791734,0.05608780748013767,
+Proteasome BioID DIA,bg_large,Heuristic score,Total AUC,9936,0.11486500973997106,0.012644731076483949,
+Proteasome BioID DIA,bg_large,Heuristic score,precision@10,10,,,0.3
+Proteasome BioID DIA,bg_large,Heuristic score,precision@25,25,,,0.48
+Proteasome BioID DIA,bg_large,Heuristic score,precision@50,50,,,0.48
+Proteasome BioID DIA,bg_large,Heuristic score,precision@100,100,,,0.39
+Proteasome BioID DIA,bg_large,Heuristic score,precision@200,200,,,0.25
+Proteasome BioID DIA,bg_large,Heuristic score,precision@300,300,,,0.22333333333333333
+Proteasome BioID DIA,bg_large,SAINTq,Top 50,50,0.17151876110254116,0.021799542547683036,
+Proteasome BioID DIA,bg_large,SAINTq,Top 100,100,0.1929586062403588,0.02452448536614342,
+Proteasome BioID DIA,bg_large,SAINTq,Top 200,200,0.20367852880926762,0.025886956775373574,
+Proteasome BioID DIA,bg_large,SAINTq,Top 300,300,0.2057673328897468,0.02553595383780383,
+Proteasome BioID DIA,bg_large,SAINTq,Total AUC,9936,0.09329055879272925,0.007592607075882114,
+Proteasome BioID DIA,bg_large,SAINTq,precision@10,10,,,0.21645021645021645
+Proteasome BioID DIA,bg_large,SAINTq,precision@25,25,,,0.21645021645021642
+Proteasome BioID DIA,bg_large,SAINTq,precision@50,50,,,0.21645021645021642
+Proteasome BioID DIA,bg_large,SAINTq,precision@100,100,,,0.21645021645021642
+Proteasome BioID DIA,bg_large,SAINTq,precision@200,200,,,0.21645021645021642
+Proteasome BioID DIA,bg_large,SAINTq,precision@300,300,,,0.20083333333333334
+Proteasome BioID DIA,bg_large,SAINTexpress,Top 50,50,0.17993317728533562,0.02426086708033032,
+Proteasome BioID DIA,bg_large,SAINTexpress,Top 100,100,0.2024248244460026,0.0272934754653716,
+Proteasome BioID DIA,bg_large,SAINTexpress,Top 200,200,0.21367372858722194,0.028806322203503754,
+Proteasome BioID DIA,bg_large,SAINTexpress,Top 300,300,0.21589668523929237,0.02870278901913893,
+Proteasome BioID DIA,bg_large,SAINTexpress,Total AUC,9936,0.09055089697436834,0.007867013659953629,
+Proteasome BioID DIA,bg_large,SAINTexpress,precision@10,10,,,0.2260869565217391
+Proteasome BioID DIA,bg_large,SAINTexpress,precision@25,25,,,0.2260869565217391
+Proteasome BioID DIA,bg_large,SAINTexpress,precision@50,50,,,0.2260869565217391
+Proteasome BioID DIA,bg_large,SAINTexpress,precision@100,100,,,0.22608695652173919
+Proteasome BioID DIA,bg_large,SAINTexpress,precision@200,200,,,0.22608695652173913
+Proteasome BioID DIA,bg_large,SAINTexpress,precision@300,300,,,0.20571428571428568
+Proteasome BioID DIA,bg_large,limma,Top 50,50,0.23012669893978427,0.08959606788034437,
+Proteasome BioID DIA,bg_large,limma,Top 100,100,0.227917916180988,0.07323470348405861,
+Proteasome BioID DIA,bg_large,limma,Top 200,200,0.21376481014913884,0.05310679250792842,
+Proteasome BioID DIA,bg_large,limma,Top 300,300,0.20684387379496644,0.041875025713193736,
+Proteasome BioID DIA,bg_large,limma,Total AUC,9936,0.09304136906493737,0.008359099557919336,
+Proteasome BioID DIA,bg_large,limma,precision@10,10,,,0.8
+Proteasome BioID DIA,bg_large,limma,precision@25,25,,,0.48
+Proteasome BioID DIA,bg_large,limma,precision@50,50,,,0.28
+Proteasome BioID DIA,bg_large,limma,precision@100,100,,,0.23
+Proteasome BioID DIA,bg_large,limma,precision@200,200,,,0.19
+Proteasome BioID DIA,bg_large,limma,precision@300,300,,,0.19333333333333333

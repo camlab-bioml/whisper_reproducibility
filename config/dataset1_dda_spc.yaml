@@ -1,0 +1,48 @@
+# Dataset 1: BioID, DDA, quantified by spectral counts (no SAINTq or limma run)
+
+dataset: 'Dataset 1 (BioID DDA, spectral counts)'
+level: protein
+
+# Inputs
+input_file: data/dataset1/dda_spc/intensity.tsv
+baits: [ACTB, LMNA, MAPRE3, KRT8, CTNNA1]    # null: every sample that is not a control
+controls: [EGFP, Empty, NminiTurbo]
+control_match: substring    # substring or exact
+labelling_enzyme: birA
+bait_self_protein: {}
+drop_unnamed: false
+
+# Training
+initial_positives: 5
+initial_negatives: 200
+n_decoy_replicates: 30
+
+# Methods compared (scored outside this workflow; see README)
+methods:
+  saintexpress: data/dataset1/dda_spc/saintexpress.txt
+  comppass: data/dataset1/dda_spc/comppass.csv
+  sfinx: data/dataset1/dda_spc/sfinx.csv
+  ppnsaf: data/dataset1/dda_spc/ppnsaf.csv
+  mist: data/dataset1/dda_spc/mist.csv
+
+# References (frozen; the copies used in the paper)
+references:
+  go_large: data/dataset1/dda_spc/gocc_reference.csv
+  bg_large: data/dataset1/dda_spc/biogrid_reference.csv
+
+# Identifier handling
+map_identifiers: false    # UniProt -> gene symbol through src/goa_human.gaf
+fdr_bins_map_ids: false
+self_gene: {}
+all_methods_in_main: true
+
+# Only for regenerating the references (optional rules)
+reference_generation:
+  baits: [LMNA, ACTB, KRT8, MAPRE3, CTNNA1]
+  term_size_threshold: 1000
+  bait_self_prey: {ACTB: [ACTB, 'ACTB;ACTG1']}
+
+# Outputs
+table_number: 3    # Supplementary Table
+results_dir: results/dataset1/dda_spc
+steps: [benchmark, supplementary_table]

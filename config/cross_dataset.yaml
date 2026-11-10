@@ -1,0 +1,50 @@
+# Analyses that combine datasets. Run after the dataset configs:
+#     snakemake -s cross_dataset.smk --configfile config/cross_dataset.yaml --cores 4
+
+cross_dataset: true
+results_dir: results/cross_dataset
+
+datasets:
+  dataset1: config/dataset1.yaml
+  dataset1_dda_int: config/dataset1_dda_int.yaml
+  dataset1_dda_spc: config/dataset1_dda_spc.yaml
+  dataset1_peptide: config/dataset1_peptide.yaml
+  dataset1_fragment: config/dataset1_fragment.yaml
+  dataset2: config/dataset2.yaml
+  dataset3: config/dataset3.yaml
+  dataset4: config/dataset4.yaml
+  dataset5: config/dataset5.yaml
+
+# Sup. Figs 12-13 (summaries), 15 and 16, in display order
+benchmark_datasets: [dataset1, dataset2, dataset3, dataset4, dataset5]
+
+# Sup. Fig. 17
+transfer:
+  source: dataset1
+  targets: [dataset2, dataset3, dataset4, dataset5]
+
+# Sup. Fig. 1a: method -> variant -> [dataset config, 'scores' or the method key]
+variants:
+  whisper:
+    whisper_dia_diann: [dataset1, scores]
+    whisper_dda_int: [dataset1_dda_int, scores]
+    whisper_dda_spc: [dataset1_dda_spc, scores]
+    whisper_dia_diann_peptide: [dataset1_peptide, scores]
+    whisper_dia_diann_fragment: [dataset1_fragment, scores]
+  SAINTq:
+    saintq_dia_diann: [dataset1, saintq]
+    saintq_dda_int: [dataset1_dda_int, saintq]
+    saintq_dia_diann_peptide: [dataset1_peptide, saintq]
+    saintq_dia_diann_fragment: [dataset1_fragment, saintq]
+  SAINTexpress:
+    saintexpress_dia_diann: [dataset1, saintexpress]
+    saintexpress_dda_int: [dataset1_dda_int, saintexpress]
+    saintexpress_dda_spc: [dataset1_dda_spc, saintexpress]
+  limma:
+    limma_dia_diann: [dataset1, limma]
+    limma_dda_int: [dataset1_dda_int, limma]
+
+# Sup. Fig. 1b
+int_spc:
+  intensity: dataset1_dda_int
+  spectral_counts: dataset1_dda_spc

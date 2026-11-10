@@ -1,30 +1,53 @@
-# Input raw data
-input_file: data/dataset4/input_intensity_dataset.tsv
+# Dataset 3: BioID, DIA, proteasome subunits; UniProt accessions
 
-# Controls used for negative examples in feature engineering
+dataset: Dataset 3 (BioID DIA)
+level: protein
+
+# Inputs
+input_file: data/dataset3/intensity.tsv
+baits: null    # null: every sample that is not a control
 controls: [BirA]
+control_match: substring    # substring or exact
+labelling_enzyme: birA
+bait_self_protein: {PSMA4: P25789, PSMC2: P35998}
+drop_unnamed: false
 
-# Bait proteins to analyze
-baits: [PSMA4, PSMC2]
-
-# Output paths
-feature_output: results/dataset4/features.csv
-fdr_output: results/dataset4/final_predictions.csv
-gocc_output: results/dataset4/gocc_ground_truth.csv
-biogrid_output: results/dataset4/biogrid_ground_truth.csv
-
-# Initial labeling for PU learning
-initial_positives: 10
+# Training
+initial_positives: 20
 initial_negatives: 200
+n_decoy_replicates: 30
 
-# GO annotation files
-gaf_file: src/goa_human.gaf
-obo_file: src/go-basic.obo
+# Methods compared (scored outside this workflow; see README)
+methods:
+  saintq: data/dataset3/saintq.tsv
+  saintexpress: data/dataset3/saintexpress.txt
+  limma: data/dataset3/limma.tsv
+  comppass: data/dataset3/comppass.csv
+  sfinx: data/dataset3/sfinx.csv
+  ppnsaf: data/dataset3/ppnsaf.csv
+  mist: data/dataset3/mist.csv
 
-# Plotting inputs
-plot_gt_file: results/dataset4/gocc_ground_truth.csv  # or biogrid_ground_truth.csv
-plot_gt_source: go_large  # or "go_small" depending on your gold standard type
+# References (frozen; the copies used in the paper)
+references:
+  go_large: data/dataset3/gocc_reference.csv
+  bg_large: data/dataset3/biogrid_reference.csv
 
-# SAINT score outputs
-saintq_path: data/dataset4/SAINTexpress_output.txt
-saintexpress_path: data/dataset4/SAINTq_output.tsv
+# Identifier handling
+map_identifiers: true    # UniProt -> gene symbol through src/goa_human.gaf
+fdr_bins_map_ids: true
+self_gene: {PSMA4: PSMA4, PSMC2: PSMC2}
+all_methods_in_main: false
+
+# Only for regenerating the references (optional rules)
+reference_generation:
+  baits: [PSMA4, PSMC2]
+  term_size_threshold: 1000
+  bait_self_prey: {PSMA4: [PSMA4, P25789], PSMC2: [PSMC2, P35998]}
+
+# GO aspect references (Sup. Fig. 7; frozen)
+go_aspects_dir: data/dataset3/go_aspects
+
+# Outputs
+table_number: 7    # Supplementary Table
+results_dir: results/dataset3
+steps: [benchmark, overlap, fdr_bins, label_quality, auc_range, per_bait, saint_intersection, go_aspects, gocc_sensitivity, fdr_bounds_methods, fdr_bounds_nulls, cross_validation, tuning_sweep, tuned_model, posneg_auc, label_diagnostics, supplementary_table]

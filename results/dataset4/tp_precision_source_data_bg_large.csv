@@ -1,0 +1,9 @@
+Method,FDR Bin,Precision,TP,Total,ground_truth
+PU Learning,0-0.01,0.29751131221719457,263,884,bg_large
+PU Learning,0.01-0.05,0.09789897183728208,219,2237,bg_large
+SAINTq,0-0.01,0.17363344051446947,54,311,bg_large
+SAINTq,0.01-0.05,0.27594627594627597,226,819,bg_large
+SAINTexpress,0-0.01,1.0,1,1,bg_large
+SAINTexpress,0.01-0.05,0.0,0,0,bg_large
+limma,0-0.01,0.09333333333333334,14,150,bg_large
+limma,0.01-0.05,0.0375,6,160,bg_large

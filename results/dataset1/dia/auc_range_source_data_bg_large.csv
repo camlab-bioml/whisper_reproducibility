@@ -1,0 +1,56 @@
+dataset,ground_truth,Method,Depth,topn,AUC,AUC_std,precision
+Benchmarking BioID DIA,bg_large,WHISPER,Top 50,50,0.6577125717448196,0.04640396917966832,
+Benchmarking BioID DIA,bg_large,WHISPER,Top 100,100,0.6929510709079316,0.042790457420688016,
+Benchmarking BioID DIA,bg_large,WHISPER,Top 200,200,0.6673829733009335,0.036901126425560274,
+Benchmarking BioID DIA,bg_large,WHISPER,Top 300,300,0.6377485136417271,0.03442488139855841,
+Benchmarking BioID DIA,bg_large,WHISPER,Total AUC,26595,0.2403435618695888,0.009794119618969461,
+Benchmarking BioID DIA,bg_large,WHISPER,precision@10,10,,,0.875
+Benchmarking BioID DIA,bg_large,WHISPER,precision@25,25,,,0.8933333333333333
+Benchmarking BioID DIA,bg_large,WHISPER,precision@50,50,,,0.7866666666666666
+Benchmarking BioID DIA,bg_large,WHISPER,precision@100,100,,,0.6949999999999997
+Benchmarking BioID DIA,bg_large,WHISPER,precision@200,200,,,0.5887499999999999
+Benchmarking BioID DIA,bg_large,WHISPER,precision@300,300,,,0.5033333333333333
+Benchmarking BioID DIA,bg_large,Heuristic score,Top 50,50,0.5558966078621596,0.06001306565312015,
+Benchmarking BioID DIA,bg_large,Heuristic score,Top 100,100,0.5724133840944948,0.0549652251299071,
+Benchmarking BioID DIA,bg_large,Heuristic score,Top 200,200,0.5380435393242631,0.04844087518671188,
+Benchmarking BioID DIA,bg_large,Heuristic score,Top 300,300,0.5052229633871359,0.04410297374212861,
+Benchmarking BioID DIA,bg_large,Heuristic score,Total AUC,26595,0.19141634280589784,0.007646371538606634,
+Benchmarking BioID DIA,bg_large,Heuristic score,precision@10,10,,,0.9
+Benchmarking BioID DIA,bg_large,Heuristic score,precision@25,25,,,0.84
+Benchmarking BioID DIA,bg_large,Heuristic score,precision@50,50,,,0.66
+Benchmarking BioID DIA,bg_large,Heuristic score,precision@100,100,,,0.54
+Benchmarking BioID DIA,bg_large,Heuristic score,precision@200,200,,,0.44
+Benchmarking BioID DIA,bg_large,Heuristic score,precision@300,300,,,0.39
+Benchmarking BioID DIA,bg_large,SAINTq,Top 50,50,0.19557024064838782,0.02409407936759649,
+Benchmarking BioID DIA,bg_large,SAINTq,Top 100,100,0.22001652072943628,0.027105839288546058,
+Benchmarking BioID DIA,bg_large,SAINTq,Top 200,200,0.23223966076996055,0.02861171924902084,
+Benchmarking BioID DIA,bg_large,SAINTq,Top 300,300,0.2460873183547347,0.02866804930200669,
+Benchmarking BioID DIA,bg_large,SAINTq,Total AUC,26595,0.16781239947892498,0.006034997003764168,
+Benchmarking BioID DIA,bg_large,SAINTq,precision@10,10,,,0.24267782426778242
+Benchmarking BioID DIA,bg_large,SAINTq,precision@25,25,,,0.24267782426778242
+Benchmarking BioID DIA,bg_large,SAINTq,precision@50,50,,,0.2426778242677824
+Benchmarking BioID DIA,bg_large,SAINTq,precision@100,100,,,0.2426778242677825
+Benchmarking BioID DIA,bg_large,SAINTq,precision@200,200,,,0.24267782426778248
+Benchmarking BioID DIA,bg_large,SAINTq,precision@300,300,,,0.2833333333333333
+Benchmarking BioID DIA,bg_large,SAINTexpress,Top 50,50,0.23413188074416655,0.06309371610055951,
+Benchmarking BioID DIA,bg_large,SAINTexpress,Top 100,100,0.3069037657380765,0.053500475023638625,
+Benchmarking BioID DIA,bg_large,SAINTexpress,Top 200,200,0.3359581948761709,0.04364163517483889,
+Benchmarking BioID DIA,bg_large,SAINTexpress,Top 300,300,0.35292509420511464,0.03665843707458311,
+Benchmarking BioID DIA,bg_large,SAINTexpress,Total AUC,26595,0.1588708481750384,0.006855111294397785,
+Benchmarking BioID DIA,bg_large,SAINTexpress,precision@10,10,,,0.4
+Benchmarking BioID DIA,bg_large,SAINTexpress,precision@25,25,,,0.32
+Benchmarking BioID DIA,bg_large,SAINTexpress,precision@50,50,,,0.32
+Benchmarking BioID DIA,bg_large,SAINTexpress,precision@100,100,,,0.38
+Benchmarking BioID DIA,bg_large,SAINTexpress,precision@200,200,,,0.36666666666666664
+Benchmarking BioID DIA,bg_large,SAINTexpress,precision@300,300,,,0.38422222222222224
+Benchmarking BioID DIA,bg_large,limma,Top 50,50,0.19505173392382136,0.06505532132294962,
+Benchmarking BioID DIA,bg_large,limma,Top 100,100,0.23112136798384725,0.05223599590132986,
+Benchmarking BioID DIA,bg_large,limma,Top 200,200,0.23935660822465965,0.04100831362374232,
+Benchmarking BioID DIA,bg_large,limma,Top 300,300,0.23527552568463367,0.036409135486760065,
+Benchmarking BioID DIA,bg_large,limma,Total AUC,26595,0.15292917495302594,0.0055972729160077474,
+Benchmarking BioID DIA,bg_large,limma,precision@10,10,,,0.6
+Benchmarking BioID DIA,bg_large,limma,precision@25,25,,,0.32
+Benchmarking BioID DIA,bg_large,limma,precision@50,50,,,0.26
+Benchmarking BioID DIA,bg_large,limma,precision@100,100,,,0.26
+Benchmarking BioID DIA,bg_large,limma,precision@200,200,,,0.24
+Benchmarking BioID DIA,bg_large,limma,precision@300,300,,,0.21333333333333335

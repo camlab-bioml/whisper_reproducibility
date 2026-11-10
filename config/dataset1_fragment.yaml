@@ -1,0 +1,33 @@
+# Dataset 1: BioID, DIA, fragment level; scores aggregated to proteins
+
+dataset: 'Dataset 1 (BioID DIA, fragment level)'
+level: fragment
+
+# Inputs
+input_file: data/dataset1/dia_fragment/intensity.csv
+baits: [ACTB, LMNA, MAPRE3, KRT8, CTNNA1]    # null: every sample that is not a control
+controls: [EGFP, Empty, NminiTurbo]
+control_match: substring    # substring or exact
+labelling_enzyme: birA
+bait_self_protein: {}
+drop_unnamed: true
+
+# Training
+initial_positives: 15
+initial_negatives: 200
+n_decoy_replicates: 30
+
+scores_file: FDR_BaitSpecific_Hierarchical_fragment_matrix.csv
+protein_scores_file: ProteinScores_fromFragments_matrix.csv
+
+methods:
+  saintq: data/dataset1/dia_fragment/saintq.tsv
+
+references:
+  go_large: data/dataset1/dia_fragment/gocc_reference.csv
+  bg_large: data/dataset1/dia_fragment/biogrid_reference.csv
+
+# Outputs
+table_number: 5    # Supplementary Table
+results_dir: results/dataset1/dia_fragment
+steps: [level_benchmark, supplementary_table]

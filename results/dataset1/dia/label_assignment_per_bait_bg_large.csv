@@ -1,0 +1,5 @@
+Bait,n_positives,n_negatives,Positive_precision,Negative_contamination
+ACTB,15,200,0.7333333333333333,0.085
+CTNNA1,15,200,0.5333333333333333,0.045
+KRT8,15,200,0.4,0.04
+LMNA,15,200,0.8,0.09

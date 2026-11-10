@@ -1,0 +1,57 @@
+# Dataset 1: BioID, DIA, protein level (DIA-NN)
+
+dataset: Dataset 1 (BioID DIA)
+level: protein
+
+# Inputs
+input_file: data/dataset1/dia/intensity.tsv
+baits: [MAPRE3, KRT8, ACTB, LMNA, CTNNA1]    # null: every sample that is not a control
+controls: [EGFP, Empty, NminiTurbo]
+control_match: substring    # substring or exact
+labelling_enzyme: birA
+bait_self_protein: {}
+drop_unnamed: false
+
+# Training
+initial_positives: 15
+initial_negatives: 200
+n_decoy_replicates: 30
+
+# Methods compared (scored outside this workflow; see README)
+methods:
+  saintq: data/dataset1/dia/saintq.tsv
+  saintexpress: data/dataset1/dia/saintexpress.txt
+  limma: data/dataset1/dia/limma.tsv
+  comppass: data/dataset1/dia/comppass.csv
+  sfinx: data/dataset1/dia/sfinx.csv
+  ppnsaf: data/dataset1/dia/ppnsaf.csv
+  mist: data/dataset1/dia/mist.csv
+
+# References (frozen; the copies used in the paper)
+references:
+  go_large: data/dataset1/dia/gocc_reference.csv
+  bg_large: data/dataset1/dia/biogrid_reference.csv
+
+# Identifier handling
+map_identifiers: false    # UniProt -> gene symbol through src/goa_human.gaf
+fdr_bins_map_ids: false
+self_gene: {}
+all_methods_in_main: false
+
+# HPA localisation (Fig. 6d-e, Sup. Fig. 21)
+hpa_path: data/dataset1/dia/hpa_subcellular_location.tsv
+hpa_bait: LMNA
+
+# Only for regenerating the references (optional rules)
+reference_generation:
+  baits: [LMNA, ACTB, KRT8, MAPRE3, CTNNA1]
+  term_size_threshold: 1000
+  bait_self_prey: {ACTB: [ACTB, 'ACTB;ACTG1']}
+
+# GO aspect references (Sup. Fig. 7; frozen)
+go_aspects_dir: data/dataset1/dia/go_aspects
+
+# Outputs
+table_number: 1    # Supplementary Table
+results_dir: results/dataset1/dia
+steps: [benchmark, overlap, fdr_bins, label_quality, auc_range, per_bait, saint_intersection, go_aspects, gocc_sensitivity, fdr_bounds_methods, fdr_bounds_nulls, cross_validation, tuning_sweep, tuned_model, posneg_auc, label_diagnostics, supplementary_table, go_enrichment, hpa, go_tables]

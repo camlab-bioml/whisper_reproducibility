@@ -1,436 +1,163 @@
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler
+"""WHISPER feature engineering."""
+
 import re
 import warnings
 
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
 warnings.filterwarnings("ignore")
 
+FEATURE_COLUMNS = [
+    "log_fold_change", "snr", "mean_diff", "median_diff",
+    "replicate_fold_change_sd", "bait_cv", "bait_control_sd_ratio",
+    "zero_or_neg_fc",
+]
+HEURISTIC_FEATURES = ["log_fold_change", "snr", "mean_diff", "median_diff"]
 
-def run_feature_engineering(intensity_df: pd.DataFrame, controls: list) -> pd.DataFrame:
+ID_COLUMNS = {
+    "protein": ["Protein"],
+    "peptide": ["Protein", "Peptide"],
+    "fragment": ["Protein", "Peptide", "Fragment"],
+}
+
+
+def read_matrix(path, level="protein"):
+    """Read an intensity matrix and standardise its identifier columns."""
+    sep = "\t" if str(path).endswith((".tsv", ".txt")) else ","
+    df = pd.read_csv(path, sep=sep)
+    return df.rename(columns={"protein": "Protein", "peptide": "Peptide"})
+
+
+def _unnamed_rows(df, level):
+    bad = {"", "nan", "None"} | ({"0"} if level != "protein" else set())
+    return df["Protein"].isna() | df["Protein"].astype(str).str.strip().isin(bad)
+
+
+def _control_columns(columns, controls, match):
+    if match == "exact":
+        return [c for c in columns if re.sub(r"_\d+$", "", c) in controls]
+    return [c for c in columns if any(ctrl in c for ctrl in controls)]
+
+
+def run_feature_engineering(intensity_df, controls, baits=None, level="protein",
+                            control_match="substring", labelling_enzyme="birA",
+                            bait_self_protein=None, drop_unnamed=False):
+    """Feature table for every bait.
+
+    Returns one row per bait and identifier with the eight WHISPER features,
+    the replicate-support flags, `is_inert`, the heuristic `composite_score`
+    and the identifier's global CV across all samples.
     """
-    Protein-level feature engineering for whisper.
+    id_cols = ID_COLUMNS[level]
+    bait_self_protein = bait_self_protein or {}
+    df = intensity_df.copy()
 
-    Parameters
-    ----------
-    intensity_df : pd.DataFrame
-        Wide matrix with columns:
-          - 'Protein'
-          - sample intensity columns named as '<BAIT>_<rep>' (e.g., LMNA_1, LMNA_2, ...)
-          - control intensity columns containing any of the strings in `controls`
-    controls : list
-        List of substrings that identify control columns (e.g., ["EGFP", "Empty", "NminiTurbo"])
+    if drop_unnamed:
+        unnamed = _unnamed_rows(df, level)
+        if unnamed.any():
+            print(f"Dropping {int(unnamed.sum())} row(s) with no protein identifier")
+            df = df.loc[~unnamed].reset_index(drop=True)
+    dups = df.duplicated(subset=id_cols, keep=False)
+    if dups.any():
+        print(f"WARNING: {int(dups.sum())} rows share duplicated {id_cols} keys")
 
-    Returns
-    -------
-    pd.DataFrame
-        Aggregated feature table with one row per (Bait, Prey) containing:
-        ['Bait','Prey','log_fold_change','snr','mean_diff','median_diff',
-         'replicate_fold_change_sd','bait_cv','bait_control_sd_ratio','zero_or_neg_fc',
-         'nonzero_reps','reps_above_ctrl_med','single_rep_flag','heuristic_score','global_cv']
-        The table is also written to 'features.csv'.
-    """
+    sample_cols = [c for c in df.columns if c not in id_cols]
+    control_cols = _control_columns(df.columns, controls, control_match)
+    if baits is None:
+        baits = sorted({c.split("_")[0] for c in sample_cols
+                        if c not in control_cols})
 
-    # --- Identify control columns ---
-    control_columns = [col for col in intensity_df.columns if any(ctrl in col for ctrl in controls)]
+    # global CV per identifier across every sample column
+    values = df[sample_cols].astype(float).to_numpy()
+    means = values.mean(axis=1)
+    sds = values.std(axis=1)
+    cv = np.where(means > 0, sds / np.where(means > 0, means, 1), 0)
+    keys = [tuple(r) if len(id_cols) > 1 else r[0]
+            for r in df[id_cols].itertuples(index=False, name=None)]
+    global_cv = dict(zip(keys, cv))
 
-    # --- Infer baits (anything that is not a control, parsed from '<BAIT>_<rep>') ---
-    all_sample_columns = [col for col in intensity_df.columns if col != 'Protein']
-    baits = sorted(list(set(
-        col.split('_')[0]
-        for col in all_sample_columns
-        if (col not in control_columns) and ('_' in col)
-    )))
-
-    # --- All intensity columns (for global CV) ---
-    intensity_columns = control_columns + [c for c in all_sample_columns if c not in control_columns]
-
-    # === Global CV across ALL samples (exclude bait protein itself and 'birA') ===
-    global_cv_dict = {}
-    for _, row in intensity_df.iterrows():
-        prey = row['Protein']
-        if prey in baits or prey == 'birA':
-            continue
-        vals = row[intensity_columns].astype(float).values
-        mean_all = np.mean(vals)
-        sd_all = np.std(vals)
-        cv = sd_all / mean_all if mean_all > 0 else 0.0
-        global_cv_dict[prey] = cv
-
-    all_bait_features = []
-
+    frames = []
     for bait in baits:
-        # replicate columns for this bait (match strictly '<BAIT>_<rep>')
-        bait_columns = [col for col in intensity_df.columns if re.fullmatch(fr'{bait}_[0-9]+', col)]
-
-        # filter out bait protein and 'birA'
-        filtered_df = intensity_df[~intensity_df['Protein'].isin([bait, 'birA'])].copy()
-
-        # precompute control stats
-        control_matrix = filtered_df[control_columns].astype(float).values
-        control_means = np.mean(control_matrix, axis=1)
-        control_sds   = np.std(control_matrix, axis=1)
-
-        # small positive fallbacks for zeros
-        nonzero_mean_controls = control_means[control_means > 0]
-        nonzero_sd_controls   = control_sds[control_sds > 0]
-        min_mean_control = nonzero_mean_controls.min() if len(nonzero_mean_controls) > 0 else 1.0
-        min_sd_control   = nonzero_sd_controls.min()   if len(nonzero_sd_controls)   > 0 else 1.0
-
-        features = []
-
-        for idx, row in filtered_df.iterrows():
-            prey = row['Protein']
-
-            bait_intensities    = row[bait_columns].astype(float).values if len(bait_columns) else np.array([0.0])
-            control_intensities = row[control_columns].astype(float).values if len(control_columns) else np.array([0.0])
-
-            mean_baits   = np.mean(bait_intensities)
-            median_baits = np.median(bait_intensities)
-            sd_baits     = np.std(bait_intensities)
-
-            mean_controls = np.mean(control_intensities)
-            sd_controls   = np.std(control_intensities)
-
-            # guard against zeros
-            mean_controls = mean_controls if mean_controls > 0 else min_mean_control
-            sd_controls   = sd_controls   if sd_controls   > 0 else min_sd_control
-
-            # core ratios / penalties
-            zero_count_baits = int(np.sum(bait_intensities == 0))
-            fold_change      = mean_baits / mean_controls
-            log_fold_change  = np.log2(fold_change + 1e-5)
-            penalized_log_fc = log_fold_change / max(1, zero_count_baits)
-
-            snr          = mean_baits / sd_controls
-            penalized_snr = snr / max(1, zero_count_baits)
-
-            replicate_fc_sd        = np.std(bait_intensities / mean_controls)
-            bait_cv                = (sd_baits / mean_baits) if mean_baits != 0 else 0.0
-            bait_control_sd_ratio  = sd_baits / sd_controls
-            mean_diff              = mean_baits  - mean_controls
-            median_diff            = median_baits - np.median(control_intensities)
-            zero_or_neg_fc         = 0 if penalized_log_fc <= 0 else 1
-
-            # replicate support flags
-            nonzero_reps        = int(np.sum(bait_intensities > 0))
-            reps_above_ctrl_med = int(np.sum(bait_intensities > np.median(control_intensities)))
-            single_rep_flag     = 1 if nonzero_reps == 1 else 0
-
-            features.append({
-                'Bait': bait,
-                'Prey': prey,
-                'log_fold_change': penalized_log_fc,
-                'snr': penalized_snr,
-                'mean_diff': mean_diff,
-                'median_diff': median_diff,
-                'replicate_fold_change_sd': replicate_fc_sd,
-                'bait_cv': bait_cv,
-                'bait_control_sd_ratio': bait_control_sd_ratio,
-                'zero_or_neg_fc': zero_or_neg_fc,
-                'nonzero_reps': nonzero_reps,
-                'reps_above_ctrl_med': reps_above_ctrl_med,
-                'single_rep_flag': single_rep_flag
-            })
-
-        bait_features_df = pd.DataFrame(features)
-
-        # scale per bait for stability
-        scale_cols = [
-            'log_fold_change', 'snr', 'mean_diff', 'median_diff',
-            'replicate_fold_change_sd', 'bait_cv', 'bait_control_sd_ratio',
-            'zero_or_neg_fc'
-        ]
-        scaler = StandardScaler()
-        scaled = pd.DataFrame(
-            scaler.fit_transform(bait_features_df[scale_cols]),
-            columns=scale_cols, index=bait_features_df.index
-        )
-
-        # heuristic score = mean of main signal features
-        bait_features_df['heuristic_score'] = scaled[['log_fold_change','snr','mean_diff','median_diff']].mean(axis=1)
-
-        # map global CV (NaN if not computed—e.g., prey was bait/birA everywhere)
-        bait_features_df['global_cv'] = bait_features_df['Prey'].map(global_cv_dict)
-
-        # sort and collect
-        all_bait_features.append(bait_features_df.sort_values(by='heuristic_score', ascending=False))
-
-    aggregated_features_df = pd.concat(all_bait_features, ignore_index=True)
-
-    # write (kept for backward compatibility)
-    aggregated_features_df.to_csv('features.csv', index=False)
-
-    return aggregated_features_df
+        if level == "protein":
+            bait_cols = [c for c in df.columns if re.fullmatch(fr"{re.escape(bait)}_\d+", c)]
+        else:
+            bait_cols = [f"{bait}_1", f"{bait}_2", f"{bait}_3"]
+            if not all(c in df.columns for c in bait_cols):
+                print(f"[WARN] Skipping bait {bait}: replicate columns missing")
+                continue
+        frames.append(_bait_features(df, bait, bait_cols, control_cols, id_cols,
+                                     level, labelling_enzyme, bait_self_protein,
+                                     global_cv))
+    out = pd.concat(frames, ignore_index=True)
+    if level == "protein":
+        out = out.rename(columns={"Protein": "Prey"})
+    return out
 
 
+def _bait_features(df, bait, bait_cols, control_cols, id_cols, level,
+                   labelling_enzyme, bait_self_protein, global_cv):
+    inert_names = {bait, bait_self_protein.get(bait, bait), labelling_enzyme} - {None}
+    is_inert = df["Protein"].astype(str).map(
+        lambda p: bool(inert_names & set(p.split(";"))))
+    eligible_df = df[~is_inert]
+    inert_df = df[is_inert]
 
+    ctrl = eligible_df[control_cols].astype(float).to_numpy()
+    ctrl_means = ctrl.mean(axis=1)
+    ctrl_sds = ctrl.std(axis=1)
+    # floors for an all-zero control row; the protein pipeline falls back to
+    # 1000 and the peptide/fragment pipelines to 1.0 when no control is nonzero
+    fallback = 1000 if level == "protein" else 1.0
+    min_mean = ctrl_means[ctrl_means > 0].min() if (ctrl_means > 0).any() else fallback
+    min_sd = ctrl_sds[ctrl_sds > 0].min() if (ctrl_sds > 0).any() else fallback
 
+    rows = []
+    for source, inert_flag in ((eligible_df, False), (inert_df, True)):
+        for _, row in source.iterrows():
+            b = row[bait_cols].astype(float).values
+            c = row[control_cols].astype(float).values
+            mean_b, median_b, sd_b = np.mean(b), np.median(b), np.std(b)
+            mean_c, sd_c = np.mean(c), np.std(c)
+            mean_c = mean_c if mean_c > 0 else min_mean
+            sd_c = sd_c if sd_c > 0 else min_sd
 
+            zero_count = np.sum(b == 0)
+            log_fc = np.log2(mean_b / mean_c + 1e-5) / max(1, zero_count)
+            snr = (mean_b / sd_c) / max(1, zero_count)
+            nonzero_reps = int(np.sum(b > 0))
 
-
-def run_feature_engineering_peptide(intensity_df: pd.DataFrame, controls: list) -> pd.DataFrame:
-    """
-    Compute peptide-level features.
-    Mirrors the logic of protein_features.feature_engineering, 
-    but operates per peptide rather than per protein.
-
-    Parameters
-    ----------
-    intensity_df : pd.DataFrame
-        Peptide-level intensity matrix (columns = bait replicates and controls, 
-        rows = peptide entries with columns ['Protein', 'Peptide', sample columns])
-    controls : list
-        List of control identifiers (e.g., ["EGFP", "Empty", "NminiTurbo"])
-
-    Returns
-    -------
-    pd.DataFrame
-        Aggregated feature table per bait–peptide pair with computed metrics.
-    """
-
-    # --- Identify columns ---
-    control_columns = [c for c in intensity_df.columns if any(ctrl in c for ctrl in controls)]
-    all_sample_columns = [c for c in intensity_df.columns if c not in ["Protein", "Peptide"]]
-    baits = sorted(list(set(col.split("_")[0] for col in all_sample_columns if col not in control_columns)))
-    intensity_columns = control_columns + [c for c in all_sample_columns if any(b in c for b in baits)]
-
-    # --- Compute global CVs (exclude BirA and bait proteins) ---
-    global_cv = {}
-    for _, row in intensity_df.iterrows():
-        prey = row["Protein"]
-        if prey in baits or prey == "birA":
-            continue
-        vals = row[intensity_columns].astype(float).values
-        mean_all = np.mean(vals)
-        sd_all = np.std(vals)
-        global_cv[(row["Protein"], row["Peptide"])] = sd_all / mean_all if mean_all > 0 else 0
-
-    all_bait_features = []
-
-    for bait in baits:
-        bait_columns = [c for c in intensity_df.columns if re.fullmatch(fr"{bait}_\d+", c)]
-        filtered_df = intensity_df[~intensity_df["Protein"].isin([bait, "birA"])].copy()
-
-        # --- Control summary stats ---
-        ctrl_vals = filtered_df[control_columns].astype(float).values
-        ctrl_means = np.mean(ctrl_vals, axis=1)
-        ctrl_sds = np.std(ctrl_vals, axis=1)
-
-        min_mean_ctrl = np.min(ctrl_means[ctrl_means > 0]) if np.any(ctrl_means > 0) else 1.0
-        min_sd_ctrl = np.min(ctrl_sds[ctrl_sds > 0]) if np.any(ctrl_sds > 0) else 1.0
-
-        features = []
-        for _, row in filtered_df.iterrows():
-            prey = row["Protein"]
-            peptide = row["Peptide"]
-
-            bait_int = row[bait_columns].astype(float).values
-            ctrl_int = row[control_columns].astype(float).values
-
-            mean_bait = np.mean(bait_int)
-            median_bait = np.median(bait_int)
-            sd_bait = np.std(bait_int)
-
-            mean_ctrl = np.mean(ctrl_int)
-            sd_ctrl = np.std(ctrl_int)
-            mean_ctrl = mean_ctrl if mean_ctrl > 0 else min_mean_ctrl
-            sd_ctrl = sd_ctrl if sd_ctrl > 0 else min_sd_ctrl
-
-            zero_count = np.sum(bait_int == 0)
-            fold_change = mean_bait / mean_ctrl
-            log_fc = np.log2(fold_change + 1e-5)
-            penalized_log_fc = log_fc / max(1, zero_count)
-            snr = mean_bait / sd_ctrl
-            penalized_snr = snr / max(1, zero_count)
-
-            replicate_fc_sd = np.std(bait_int / mean_ctrl)
-            bait_cv = sd_bait / mean_bait if mean_bait != 0 else 0
-            bait_ctrl_sd_ratio = sd_bait / sd_ctrl
-
-            nonzero_reps = int(np.sum(bait_int > 0))
-            reps_above_ctrl_med = int(np.sum(bait_int > np.median(ctrl_int)))
-            single_rep_flag = 1 if nonzero_reps == 1 else 0
-
-            features.append({
-                "Bait": bait,
-                "Protein": prey,
-                "Peptide": peptide,
-                "log_fold_change": penalized_log_fc,
-                "snr": penalized_snr,
-                "mean_diff": mean_bait - mean_ctrl,
-                "median_diff": median_bait - np.median(ctrl_int),
-                "replicate_fold_change_sd": replicate_fc_sd,
-                "bait_cv": bait_cv,
-                "bait_control_sd_ratio": bait_ctrl_sd_ratio,
-                "zero_or_neg_fc": 0 if penalized_log_fc <= 0 else 1,
+            rec = {"Bait": bait}
+            for col in id_cols:
+                rec[col] = row[col]
+            rec.update({
+                "log_fold_change": log_fc,
+                "snr": snr,
+                "mean_diff": mean_b - mean_c,
+                "median_diff": median_b - np.median(c),
+                "replicate_fold_change_sd": np.std(b / mean_c),
+                "bait_cv": sd_b / mean_b if mean_b != 0 else 0,
+                "bait_control_sd_ratio": sd_b / sd_c,
+                "zero_or_neg_fc": 0 if log_fc <= 0 else 1,
                 "nonzero_reps": nonzero_reps,
-                "reps_above_ctrl_med": reps_above_ctrl_med,
-                "single_rep_flag": single_rep_flag,
+                "reps_above_ctrl_med": int(np.sum(b > np.median(c))),
+                "single_rep_flag": 1 if nonzero_reps == 1 else 0,
+                "is_inert": inert_flag,
             })
+            rows.append(rec)
+    feat = pd.DataFrame(rows)
 
-        bait_features = pd.DataFrame(features)
-
-        # --- Scaling and heuristic score ---
-        scale_cols = [
-            "log_fold_change", "snr", "mean_diff", "median_diff",
-            "replicate_fold_change_sd", "bait_cv", "bait_control_sd_ratio",
-            "zero_or_neg_fc",
-        ]
-        scaler = StandardScaler()
-        scaled_df = pd.DataFrame(
-            scaler.fit_transform(bait_features[scale_cols]),
-            columns=scale_cols, index=bait_features.index,
-        )
-
-        bait_features["heuristic_score"] = scaled_df[
-            ["log_fold_change", "snr", "mean_diff", "median_diff"]
-        ].mean(axis=1)
-
-        bait_features["global_cv"] = bait_features.apply(
-            lambda r: global_cv.get((r["Protein"], r["Peptide"]), np.nan), axis=1
-        )
-
-        all_bait_features.append(bait_features.sort_values("heuristic_score", ascending=False))
-
-    aggregated_features_df = pd.concat(all_bait_features, ignore_index=True)
-    aggregated_features_df.to_csv("features_peptide.csv", index=False)
-    return aggregated_features_df
-
-
-
-
-
-def run_feature_engineering_fragment(intensity_df: pd.DataFrame, controls: list) -> pd.DataFrame:
-    """
-    Compute fragment-level features.
-    Mirrors protein/peptide feature engineering but operates on (Protein, Peptide, Fragment).
-
-    Parameters
-    ----------
-    intensity_df : pd.DataFrame
-        Fragment-level intensity matrix with columns:
-        ['Protein', 'Peptide', 'Fragment', <bait/replicate and control columns>]
-    controls : list
-        List of control identifiers (e.g., ["EGFP", "Empty", "NminiTurbo"])
-
-    Returns
-    -------
-    pd.DataFrame
-        Aggregated feature table per bait–(protein, peptide, fragment) with computed metrics.
-    """
-
-    # --- Identify columns ---
-    id_cols = ["Protein", "Peptide", "Fragment"]
-    control_columns = [c for c in intensity_df.columns if any(ctrl in c for ctrl in controls)]
-    sample_columns = [c for c in intensity_df.columns if c not in id_cols]
-    bait_like_columns = [c for c in sample_columns if c not in control_columns]
-    baits = sorted(list(set(col.split("_")[0] for col in bait_like_columns)))
-    intensity_columns = control_columns + [c for c in bait_like_columns if any(b in c for b in baits)]
-
-    # --- Global CV across ALL samples for each fragment (exclude BirA and bait proteins for map) ---
-    global_cv = {}
-    for _, row in intensity_df.iterrows():
-        prot = row["Protein"]
-        vals = row[intensity_columns].astype(float).values
-        mean_all = np.mean(vals)
-        sd_all = np.std(vals)
-        global_cv[(row["Protein"], row["Peptide"], row["Fragment"])] = sd_all / mean_all if mean_all > 0 else 0
-
-    all_bait_features = []
-
-    for bait in baits:
-        bait_columns = [c for c in intensity_df.columns if re.fullmatch(fr"{bait}_\d+", c)]
-        if len(bait_columns) == 0:
-            # skip baits without replicate columns that match the "<bait>_#" pattern
-            continue
-
-        # Exclude the bait's own protein & BirA
-        filtered_df = intensity_df[~intensity_df["Protein"].isin([bait, "birA"])].copy()
-
-        # --- Control summary stats ---
-        ctrl_vals = filtered_df[control_columns].astype(float).values
-        ctrl_means = np.mean(ctrl_vals, axis=1)
-        ctrl_sds = np.std(ctrl_vals, axis=1)
-
-        min_mean_ctrl = np.min(ctrl_means[ctrl_means > 0]) if np.any(ctrl_means > 0) else 1.0
-        min_sd_ctrl = np.min(ctrl_sds[ctrl_sds > 0]) if np.any(ctrl_sds > 0) else 1.0
-
-        features = []
-        for _, row in filtered_df.iterrows():
-            prey_prot = row["Protein"]
-            prey_pep = row["Peptide"]
-            prey_frag = row["Fragment"]
-
-            bait_int = row[bait_columns].astype(float).values
-            ctrl_int = row[control_columns].astype(float).values
-
-            mean_bait = np.mean(bait_int)
-            median_bait = np.median(bait_int)
-            sd_bait = np.std(bait_int)
-
-            mean_ctrl = np.mean(ctrl_int)
-            sd_ctrl = np.std(ctrl_int)
-            mean_ctrl = mean_ctrl if mean_ctrl > 0 else min_mean_ctrl
-            sd_ctrl = sd_ctrl if sd_ctrl > 0 else min_sd_ctrl
-
-            zero_count = np.sum(bait_int == 0)
-            fold_change = mean_bait / mean_ctrl
-            log_fc = np.log2(fold_change + 1e-5)
-            penalized_log_fc = log_fc / max(1, zero_count)
-            snr = mean_bait / sd_ctrl
-            penalized_snr = snr / max(1, zero_count)
-
-            replicate_fc_sd = np.std(bait_int / mean_ctrl)
-            bait_cv = sd_bait / mean_bait if mean_bait != 0 else 0
-            bait_ctrl_sd_ratio = sd_bait / sd_ctrl
-
-            nonzero_reps = int(np.sum(bait_int > 0))
-            reps_above_ctrl_med = int(np.sum(bait_int > np.median(ctrl_int)))
-            single_rep_flag = 1 if nonzero_reps == 1 else 0
-
-            features.append({
-                "Bait": bait,
-                "Protein": prey_prot,
-                "Peptide": prey_pep,
-                "Fragment": prey_frag,
-                "log_fold_change": penalized_log_fc,
-                "snr": penalized_snr,
-                "mean_diff": mean_bait - mean_ctrl,
-                "median_diff": median_bait - np.median(ctrl_int),
-                "replicate_fold_change_sd": replicate_fc_sd,
-                "bait_cv": bait_cv,
-                "bait_control_sd_ratio": bait_ctrl_sd_ratio,
-                "zero_or_neg_fc": 0 if penalized_log_fc <= 0 else 1,
-                "nonzero_reps": nonzero_reps,
-                "reps_above_ctrl_med": reps_above_ctrl_med,
-                "single_rep_flag": single_rep_flag,
-            })
-
-        bait_features = pd.DataFrame(features)
-
-        # --- Scale and heuristic score (consistent with protein/peptide) ---
-        scale_cols = [
-            "log_fold_change", "snr", "mean_diff", "median_diff",
-            "replicate_fold_change_sd", "bait_cv", "bait_control_sd_ratio",
-            "zero_or_neg_fc",
-        ]
-        scaler = StandardScaler()
-        scaled_df = pd.DataFrame(
-            scaler.fit_transform(bait_features[scale_cols]),
-            columns=scale_cols, index=bait_features.index,
-        )
-
-        bait_features["heuristic_score"] = scaled_df[
-            ["log_fold_change", "snr", "mean_diff", "median_diff"]
-        ].mean(axis=1)
-
-        bait_features["global_cv"] = bait_features.apply(
-            lambda r: global_cv.get((r["Protein"], r["Peptide"], r["Fragment"]), np.nan), axis=1
-        )
-
-        all_bait_features.append(bait_features.sort_values("heuristic_score", ascending=False))
-
-    aggregated_features_df = pd.concat(all_bait_features, ignore_index=True)
-    aggregated_features_df.to_csv("features_fragment.csv", index=False)
-    return aggregated_features_df
+    # Heuristic score: features z-scored within the bait (fit on the eligible
+    # rows, applied to all) and averaged over the four enrichment features.
+    eligible = ~feat["is_inert"].to_numpy()
+    scaler = StandardScaler().fit(feat.loc[eligible, FEATURE_COLUMNS])
+    scaled = pd.DataFrame(scaler.transform(feat[FEATURE_COLUMNS]),
+                          columns=FEATURE_COLUMNS, index=feat.index)
+    feat["composite_score"] = scaled[HEURISTIC_FEATURES].sum(axis=1) / len(HEURISTIC_FEATURES)
+    if len(id_cols) > 1:
+        feat["global_cv"] = [global_cv[tuple(k)] for k in
+                             feat[id_cols].itertuples(index=False, name=None)]
+    else:
+        feat["global_cv"] = feat[id_cols[0]].map(global_cv)
+    return feat.sort_values("composite_score", ascending=False)
