@@ -92,14 +92,15 @@ def _summary_plot(names, out_root):
             ax = axes[i][j]
             for name, dx in ((OWN, -0.16), (TRANSFER, 0.16)):
                 st = STYLE[name]
-                ax.errorbar(x + dx, [t.loc[name, metric] for t in tabs],
-                            yerr=[t.loc[name, f'{metric} Std'] for t in tabs], fmt=st['marker'],
-                            color=st['color'], markersize=7, linewidth=0, elinewidth=1.4,
-                            capsize=3, markeredgecolor='#fcfcfb', markeredgewidth=1.2, zorder=4,
-                            label=st['label'] if (i == 0 and j == 0) else None)
+                ax.bar(x + dx, [t.loc[name, metric] for t in tabs], width=0.32,
+                       yerr=[t.loc[name, f'{metric} Std'] for t in tabs], color=st['color'],
+                       capsize=3, error_kw=dict(elinewidth=1.2, ecolor='#333333'), zorder=3,
+                       label=st['label'] if (i == 0 and j == 0) else None)
             ax.set_xticks(x)
             ax.set_xticklabels(names, rotation=35, ha='right', fontsize=13.5)
             ax.set_xlim(-0.6, n - 0.4)
+            for k in range(n - 1):
+                ax.axvline(k + 0.5, color='#d0d0cc', linewidth=0.8, zorder=0)
             ax.set_ylabel(metric, fontsize=16.5)
             ax.set_ylim(0, 1)
             ax.set_title(f'{gt_label} — {metric}', fontsize=11.5, loc='left')
@@ -109,7 +110,7 @@ def _summary_plot(names, out_root):
     handles, labels = axes[0][0].get_legend_handles_labels()
     fig.legend(handles, labels, ncol=2, frameon=False, fontsize=10, loc='lower center',
                bbox_to_anchor=(0.5, 0.004))
-    fig.suptitle('Trained on each dataset against trained on BioID dataset 1', fontsize=13)
+    fig.suptitle('WHISPER: trained on each dataset against trained on BioID dataset 1', fontsize=13)
     fig.tight_layout(rect=[0, 0.05, 1, 0.95])
     fig.savefig(os.path.join(out_root, 'transfer_summary.pdf'), dpi=300)
     plt.close(fig)

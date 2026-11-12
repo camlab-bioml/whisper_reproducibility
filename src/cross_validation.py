@@ -216,15 +216,15 @@ def plot(summary, out_pdf):
                 s = summary[(summary['ground_truth'] == gt)
                             & (summary['method'] == run)].set_index('dataset')
                 s = s.reindex(datasets)
-                ax.errorbar(x + dx, s[f'{depth} mean'], yerr=s[f'{depth} std'],
-                            fmt=st['marker'], color=st['color'], markersize=7,
-                            linewidth=0, elinewidth=1.4, capsize=3,
-                            markeredgecolor='#fcfcfb', markeredgewidth=1.2,
-                            zorder=4,
-                            label=st['label'] if (i == 0 and j == 0) else None)
+                ax.bar(x + dx, s[f'{depth} mean'], width=0.32,
+                       yerr=s[f'{depth} std'], color=st['color'], capsize=3,
+                       error_kw=dict(elinewidth=1.2, ecolor='#333333'), zorder=3,
+                       label=st['label'] if (i == 0 and j == 0) else None)
             ax.set_xticks(x)
             ax.set_xticklabels(short, rotation=35, ha='right', fontsize=13.5)
             ax.set_xlim(-0.6, len(datasets) - 0.4)
+            for k in range(len(datasets) - 1):
+                ax.axvline(k + 0.5, color='#d0d0cc', linewidth=0.8, zorder=0)
             ax.set_ylabel(depth, fontsize=16.5)
             ax.set_ylim(0, 1)
             ax.set_title(f'{GT_LABEL[gt]} — {depth}', fontsize=11.5, loc='left')

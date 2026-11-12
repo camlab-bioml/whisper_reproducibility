@@ -152,14 +152,15 @@ def _plot(whisper, datasets, out_pdf):
             x = np.arange(len(s), dtype=float)
             for run, dx in (('vanilla', -0.16), ('bestconfig', 0.16)):
                 st = STYLE[run]
-                ax.errorbar(x + dx, s[f'{depth} {run}'].to_numpy(float),
-                            yerr=s[f'{depth} {run} sd'].to_numpy(float), fmt=st['marker'],
-                            color=st['color'], markersize=7, linewidth=0, elinewidth=1.4,
-                            capsize=3, markeredgecolor='#fcfcfb', markeredgewidth=1.2,
-                            zorder=4, label=st['label'] if (i == 0 and j == 0) else None)
+                ax.bar(x + dx, s[f'{depth} {run}'].to_numpy(float), width=0.32,
+                       yerr=s[f'{depth} {run} sd'].to_numpy(float), color=st['color'],
+                       capsize=3, error_kw=dict(elinewidth=1.2, ecolor='#333333'),
+                       zorder=3, label=st['label'] if (i == 0 and j == 0) else None)
             ax.set_xticks(x)
             ax.set_xticklabels(list(s.index), rotation=35, ha='right', fontsize=13.5)
             ax.set_xlim(-0.6, len(s) - 0.4)
+            for k in range(len(s) - 1):
+                ax.axvline(k + 0.5, color='#d0d0cc', linewidth=0.8, zorder=0)
             ax.set_ylabel(depth, fontsize=16.5)
             ax.set_ylim(0, 1)
             ax.set_title(f'{GT_LABEL[gt]} — {depth}', fontsize=11.5, loc='left')
@@ -169,7 +170,7 @@ def _plot(whisper, datasets, out_pdf):
     handles, labels = axes[0][0].get_legend_handles_labels()
     fig.legend(handles, labels, ncol=2, frameon=False, fontsize=10, loc='lower center',
                bbox_to_anchor=(0.5, 0.004))
-    fig.suptitle('Defaults against the CV-selected configuration', fontsize=13)
+    fig.suptitle('WHISPER: defaults against the CV-selected configuration', fontsize=13)
     fig.tight_layout(rect=[0, 0.05, 1, 0.95])
     fig.savefig(out_pdf, dpi=300)
     plt.close(fig)
