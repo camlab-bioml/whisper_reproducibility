@@ -241,7 +241,8 @@ def dataset_step(cfg, step):
         from src.go_aspects import generate_references
         r = cfg['reference_generation']
         generate_references(r['baits'], r['term_size_threshold'],
-                            out(cfg, 'go_aspects_regenerated'), GAF_FILE, OBO_FILE, TERM_CACHE)
+                            out(cfg, 'go_aspects_regenerated'), GAF_FILE, OBO_FILE, TERM_CACHE,
+                            r['bait_self_prey'])
     else:
         raise SystemExit(f'Unknown step: {step}')
 

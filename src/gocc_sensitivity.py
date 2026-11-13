@@ -11,7 +11,7 @@ from src.benchmark import (METHOD_COLORS, is_any_gene_in_gold, load_new_methods,
                            load_old_methods, paired_bootstrap_aucs, paired_difference_ci)
 
 OUT_SUBDIR = 'gocc_sensitivity'
-CAPS = [100, 250, 500, 1000, 5000, None]
+CAPS = [100, 250, 500, 1000, 5000]
 IEA_SETTINGS = [True, False]          
 EXCLUDE_TERMS = {
     'GO:0005575',  # cellular component
@@ -290,6 +290,7 @@ def one_row_plot(auc, out_pdf, dataset_name):
                     transform=ax.get_xaxis_transform())
         ax.set_xticks(range(len(order)))
         ax.set_xticklabels([x.split('|')[2] for x in order])
+        ax.set_xlim(-0.5, len(order) - 0.5)
         ax.set_ylim(0, 1)
         ax.set_ylabel('AUCPR', fontsize=22)
         ax.set_xlabel('Term-size cap', fontsize=22)

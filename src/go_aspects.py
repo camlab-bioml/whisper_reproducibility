@@ -83,7 +83,7 @@ def gold_set(terms, cache, bait, cap):
     return preys, kept
 
 
-def generate_references(baits, cap, outdir, gaf_file, obo_file, cache_file):
+def generate_references(baits, cap, outdir, gaf_file, obo_file, cache_file, bait_self_prey=None):
 
     from goatools.obo_parser import GODag
     os.makedirs(outdir, exist_ok=True)
@@ -106,6 +106,7 @@ def generate_references(baits, cap, outdir, gaf_file, obo_file, cache_file):
         frames = []
         for b in baits:
             preys, kept = gold_set(terms_by[(b, aspect)], cache, b, cap)
+            preys |= set((bait_self_prey or {}).get(b, [b]))
             frames.append(pd.DataFrame({'Bait': b, 'Prey': sorted(preys)}))
             rows.append({'aspect': aspect, 'Bait': b, 'terms': len(terms_by[(b, aspect)]),
                          'terms_kept': kept, 'preys': len(preys)})
@@ -139,7 +140,7 @@ def figure(auc, out_pdf, dataset_name, only=None):
             xs = [i - 0.4 + (j + 0.5) * (0.8 / len(sub)) for j in range(len(sub))]
             ax.errorbar(xs, sub['AUC'], yerr=sub['Std'], fmt='none', c='black',
                         capsize=3)
-        ax.set_ylabel('AUC Value', fontsize=22)
+        ax.set_ylabel('AUCPR', fontsize=22)
       
         ax.set_ylim(0, 1)
         ax.set_xlabel('', fontsize=22)
